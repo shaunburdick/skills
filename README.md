@@ -1,4 +1,4 @@
-# Agent Skills - Shaun Burdick
+# Agent Skills
 
 A personal collection of [Agent Skills](https://agentskills.io/) for AI coding agents.
 
