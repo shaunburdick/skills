@@ -1,6 +1,6 @@
 ---
 name: code-quality
-description: Enforces non-negotiable code quality standards for AI coding agents. Covers linting rules (no suppressions ever), TypeScript type safety (no `any`), and a mandatory pre-commit verification protocol. Use when any agent writes, edits, or reviews code — ensures consistent quality gates across all coding agents.
+description: Enforces non-negotiable code quality standards for AI coding agents. Covers linting rules (no suppressions — ever), type safety (no `any` in TypeScript, no `# type: ignore` in Python), and a mandatory pre-commit verification protocol. Load this skill proactively whenever writing, editing, or reviewing code — don't wait to be asked. Ensures consistent quality gates across all languages and coding agents.
 license: MIT
 metadata:
   author: shaunburdick
@@ -13,12 +13,19 @@ Non-negotiable rules for writing and committing code. These standards exist to k
 
 ## Linting — Zero Tolerance for Suppressions
 
-- ❌ **NEVER** add `eslint-disable`, `eslint-disable-next-line`, or `eslint-disable-line` comments
-- ❌ **NEVER** use TypeScript suppression comments: `@ts-ignore`, `@ts-nocheck`, `@ts-expect-error`
-- ❌ **NEVER** disable specific lint rules inline in code
-- ✅ **ALWAYS** refactor code to comply with the linting rule's intent
-- ✅ **ALWAYS** fix type errors by improving type definitions and code structure
-- ✅ If a lint rule seems wrong for the project, discuss modifying the **lint config** with the user — don't suppress it in code
+This applies to **all languages**, not just TypeScript. The principle is the same everywhere: fix the code, don't silence the tool.
+
+| Language   | Never use                                              |
+| ---------- | ------------------------------------------------------ |
+| TypeScript | `eslint-disable`, `@ts-ignore`, `@ts-nocheck`, `@ts-expect-error` |
+| JavaScript | `eslint-disable`, `eslint-disable-next-line`           |
+| Python     | `# noqa`, `# type: ignore`, `# pylint: disable`       |
+| Rust       | `#[allow(...)]` (except in generated code)             |
+| Go         | `//nolint`                                             |
+
+- ❌ **NEVER** suppress a lint or type warning inline in code
+- ✅ **ALWAYS** refactor code to comply with the rule's intent
+- ✅ If a rule seems genuinely wrong for the project, discuss modifying the **lint config file** with the user — don't suppress it in code
 
 **When you encounter a lint error:**
 1. Read and understand what the rule is trying to prevent
@@ -26,7 +33,7 @@ Non-negotiable rules for writing and committing code. These standards exist to k
 3. If you believe the rule is genuinely incorrect for the project, ask the user about modifying the lint configuration file
 4. Document why the pattern you're using is correct and safe
 
-**Wrong vs. Right:**
+**Wrong vs. Right (TypeScript example):**
 
 ```typescript
 // ❌ WRONG — suppressing the rule
@@ -41,12 +48,38 @@ interface ProcessData {
 function process(data: ProcessData) { ... }
 ```
 
+**Wrong vs. Right (Python example):**
+
+```python
+# ❌ WRONG — suppressing the type checker
+def process(data) -> None:  # type: ignore
+    ...
+
+# ✅ RIGHT — proper typing
+from typing import TypedDict
+
+class ProcessData(TypedDict):
+    id: str
+    value: int
+
+def process(data: ProcessData) -> None:
+    ...
+```
+
 ## Type Safety
 
-- ❌ No `any` types in TypeScript — use proper interfaces, generics, or `unknown` with type guards
+Weak types are deferred bugs. Use the type system fully in whatever language you're working in.
+
+**TypeScript:**
+- ❌ No `any` — use proper interfaces, generics, or `unknown` with type guards
 - ✅ Create interfaces or type aliases for all data shapes
 - ✅ Use generics when the type varies but the structure is consistent
 - ✅ Use `unknown` + type narrowing instead of `any` when the type is genuinely unknown
+
+**Python:**
+- ❌ No untyped function signatures — annotate all parameters and return types
+- ✅ Use `TypedDict`, `dataclass`, or `pydantic` models for structured data
+- ✅ Use `Any` from `typing` only as a last resort with a comment explaining why
 
 ## Pre-Commit Verification Protocol
 
@@ -123,15 +156,22 @@ git commit -m "fix: describe what was fixed and how it was verified"
 - ✅ Use meaningful variable names — `userAuthToken` not `t`, `retryCount` not `n`
 - ❌ No commented-out code in commits — delete it or use version control
 
-## Implementation Checklist
+## Task Complete Checklist
 
-Before calling an implementation task complete:
+Before calling any implementation task done, verify all of the following:
 
 - [ ] Latest stable versions of all dependencies are used
 - [ ] All public methods have doc comments
 - [ ] Automated tests implemented with adequate coverage (per project constitution)
-- [ ] Code passes all linting rules — **zero suppressions**
-- [ ] Type safety fully enforced — **no `any`**
+- [ ] Code passes all linting rules — **zero suppressions in any language**
+- [ ] Type safety fully enforced — **no `any` / untyped signatures**
 - [ ] All acceptance criteria from spec are met
 - [ ] Security best practices followed
-- [ ] Code follows architecture defined in plan
+- [ ] Code follows the architecture defined in the plan
+- [ ] Full test suite passes
+- [ ] Linting passes with zero errors and zero warnings
+- [ ] Type checking passes
+- [ ] Build succeeds
+- [ ] The specific change was manually verified
+- [ ] No debug code or `console.log` / `print` statements left behind
+- [ ] Diff reviewed — all changed files are intentional

@@ -1,6 +1,6 @@
 ---
 name: git-safety
-description: Enforces safe git practices for AI coding agents. Defines branch protection rules, commit policies, and permission boundaries. Use when configuring any agent that writes code and commits to git repositories — prevents accidental commits to protected branches (main, master, develop) and destructive operations.
+description: Enforces safe git practices for AI coding agents. Defines branch protection rules, commit policies, amend rules, and force-push boundaries. Load this skill at the start of any session where the agent may run git commands — especially before committing, branching, pushing, or resetting. Prevents accidental commits to protected branches (main, master, develop), history rewrites, and other irreversible operations.
 license: MIT
 metadata:
   author: shaunburdick
@@ -38,9 +38,9 @@ A set of non-negotiable rules for safe git operations in AI-assisted development
   2. The HEAD commit was created by you in this conversation (verify: `git log -1 --format='%an %ae'`)
   3. The commit has NOT been pushed to remote (verify: `git status` shows "Your branch is ahead")
 
-## Recommended Agent Permissions
+## Agent Permission Configuration
 
-Add these to your agent's YAML frontmatter to enforce the policy at the tool level:
+If you are authoring an agent definition (e.g., an OpenCode `.md` agent file), add these permissions to the YAML frontmatter to enforce branch protection at the tool level — blocking dangerous commands before they can run:
 
 ```yaml
 permission:
@@ -56,8 +56,9 @@ permission:
     "git switch main": deny
     "git switch master": deny
     "git switch develop": deny
-    "rm *": ask
 ```
+
+> Note: These permissions are set by the human author in the agent definition file — a running agent cannot modify its own permissions. This section is a reference for when you're helping set up or review an agent configuration.
 
 ## Pre-Commit Branch Check
 

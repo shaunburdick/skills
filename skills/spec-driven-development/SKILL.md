@@ -1,6 +1,6 @@
 ---
 name: spec-driven-development
-description: Structured spec-driven development workflow. Use when starting a new feature, building a system from scratch, or when requirements are unclear. Guides the agent through six phases constitution → specification → clarification → plan → tasks → implement. Never skip phases.
+description: Structured spec-driven development workflow. Load this skill whenever starting a new feature, building a system from scratch, requirements are unclear, or a user asks to "plan", "spec out", "design", or "architect" something — even if they don't use the word "spec". Guides the agent through six phases: constitution → specification → clarification → plan → tasks → implement. Never skip phases.
 license: MIT
 metadata:
   author: shaunburdick
@@ -123,7 +123,7 @@ Before handing off to planning, eliminate every ambiguity.
 Create a feature branch and run the planning setup:
 
 ```bash
-git checkout -b 001-feature-name
+git checkout -b 001-feature-name   # see git-safety skill for branch rules
 .specify/scripts/bash/setup-plan.sh --json
 ```
 
@@ -180,25 +180,13 @@ Rules:
 
 Execute tasks in order, following the approved plan and referencing the constitution for quality standards.
 
-### Code Quality (Non-Negotiable)
+For all code quality rules, lint suppression policy, type safety requirements, and the pre-commit verification protocol, load and follow the **`code-quality` skill**.
 
-- ❌ No `eslint-disable`, `@ts-ignore`, `@ts-nocheck`, or any lint suppression — fix the code instead
-- ❌ No `any` types in TypeScript — use proper interfaces and generics
+Key reminders:
 - ✅ TDD preferred — write tests before or alongside implementation
 - ✅ Every public function/method must have a doc comment
 - ✅ Check off tasks in `tasks.md` as you complete them
-
-### Pre-Commit Checklist (Every Commit)
-
-- [ ] Full test suite passes
-- [ ] Linting passes with zero errors or warnings
-- [ ] Type checking passes
-- [ ] Build succeeds
-- [ ] The specific change was manually verified
-- [ ] No debug code or `console.log` left behind
-- [ ] Diff reviewed — all changed files are intentional
-
-> "It should work" ≠ "I verified it works." Always run the checks.
+- ❌ No lint suppressions of any kind — fix the code instead
 
 ---
 
