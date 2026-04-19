@@ -27,6 +27,10 @@ npx skills add shaunburdick/skills -a claude-code -a opencode
 
 Structured spec-driven development workflow: clarify requirements, write specs, plan architecture, break into tasks, then implement. Use when starting a new feature, building from scratch, or when requirements are unclear.
 
+### [spec-kit](skills/spec-kit/)
+
+Practical setup and usage guide for the spec-kit CLI — covers installation, project initialization for Claude Code and OpenCode, the `/speckit.*` slash commands, helper scripts, and detecting current workflow state. Pairs with the `spec-driven-development` skill: this one covers the tooling, that one covers the methodology.
+
 ### [git-safety](skills/git-safety/)
 
 Enforces safe git practices for AI coding agents. Defines branch protection rules (never commit to main/master/develop), commit policies, amend rules, and recommended agent permissions. Use when configuring any agent that writes code and commits to git repositories.

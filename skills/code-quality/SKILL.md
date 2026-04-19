@@ -81,85 +81,11 @@ Weak types are deferred bugs. Use the type system fully in whatever language you
 - ✅ Use `TypedDict`, `dataclass`, or `pydantic` models for structured data
 - ✅ Use `Any` from `typing` only as a last resort with a comment explaining why
 
-## Pre-Commit Verification Protocol
+## Task Complete & Pre-Commit Checklist
 
-**⚠️ "It should work" ≠ "I verified it works." Always run the checks.**
+A task isn't done until it's ready to commit. Run through this once before every commit:
 
-Complete this checklist before **every** commit:
-
-### 1. Run All Automated Checks
-- [ ] Full test suite: `npm test` / `pytest` / `go test ./...` / equivalent
-- [ ] Linting: `npm run lint` / `eslint .` / `ruff check .` / equivalent
-- [ ] Type checking: `tsc --noEmit` / `mypy` / equivalent
-- [ ] Build: `npm run build` / `go build` / equivalent
-- [ ] Zero errors **and** zero warnings in all outputs
-
-### 2. Verify the Specific Change
-- [ ] Identify the exact issue being fixed or feature being added
-- [ ] Confirm the relevant test was failing before your change (for bug fixes)
-- [ ] Confirm the test now passes with your change
-- [ ] Verify no new failures were introduced
-
-### 3. Manual Verification
-- [ ] Run the application locally and test the affected feature
-- [ ] Test edge cases related to your change
-- [ ] Verify related functionality still works
-- [ ] Check logs/console for new warnings or errors
-
-### 4. Self-Review the Diff
-- [ ] Review every changed file before committing
-- [ ] No debug code, `console.log`, or temporary hacks remain
-- [ ] All changed files are intentional
-- [ ] Code follows project conventions and style guide
-
-### 5. Integration Check
-- [ ] Changes work with the rest of the codebase
-- [ ] No breaking changes to public APIs (or they're intentional and documented)
-- [ ] Dependent code still functions
-
-### Example Verification Workflow
-
-```bash
-# Run all checks — every one must pass cleanly
-npm run lint        # Zero errors, zero warnings
-npm run type-check  # Zero errors
-npm test            # All tests green
-npm run build       # Completes successfully
-
-# Verify the specific change works
-# (run the reproduction case, test manually, check edge cases)
-
-# Only after ALL checks pass:
-git add .
-git commit -m "fix: describe what was fixed and how it was verified"
-```
-
-### 🚫 Do NOT commit if:
-- Any test is failing (even "unrelated" ones)
-- Linting has any errors or warnings
-- Type checking fails
-- Build fails or has warnings
-- You haven't manually verified the fix works
-- You're not certain what the change actually does
-
-### ✅ Only commit when:
-- ALL automated checks pass cleanly
-- You've manually verified the fix works
-- You've tested edge cases
-- You understand exactly what changed and why
-- You can explain how you verified the fix
-
-## Documentation Standards
-
-- ✅ Every public function and method must have a doc comment
-- ✅ Complex logic must have inline comments explaining the *why*, not the *what*
-- ✅ Use meaningful variable names — `userAuthToken` not `t`, `retryCount` not `n`
-- ❌ No commented-out code in commits — delete it or use version control
-
-## Task Complete Checklist
-
-Before calling any implementation task done, verify all of the following:
-
+**Code correctness:**
 - [ ] Latest stable versions of all dependencies are used
 - [ ] All public methods have doc comments
 - [ ] Automated tests implemented with adequate coverage (per project constitution)
@@ -168,10 +94,20 @@ Before calling any implementation task done, verify all of the following:
 - [ ] All acceptance criteria from spec are met
 - [ ] Security best practices followed
 - [ ] Code follows the architecture defined in the plan
-- [ ] Full test suite passes
-- [ ] Linting passes with zero errors and zero warnings
-- [ ] Type checking passes
-- [ ] Build succeeds
-- [ ] The specific change was manually verified
-- [ ] No debug code or `console.log` / `print` statements left behind
-- [ ] Diff reviewed — all changed files are intentional
+
+**Verification:**
+- [ ] Full test suite: `npm test` / `pytest` / `go test ./...` / equivalent — all green
+- [ ] Linting: `npm run lint` / `ruff check .` / equivalent — zero errors, zero warnings
+- [ ] Type checking: `tsc --noEmit` / `mypy` / equivalent — zero errors
+- [ ] Build: `npm run build` / `go build` / equivalent — completes successfully
+- [ ] The specific change was manually verified end-to-end
+- [ ] Edge cases tested
+- [ ] Related functionality still works
+
+**Diff review:**
+- [ ] No debug code, `console.log`, or `print` statements left behind
+- [ ] No commented-out code
+- [ ] All changed files are intentional and necessary
+- [ ] Can clearly explain what changed and why
+
+> 🚫 If any item above is unchecked — don't commit. Fix it first.

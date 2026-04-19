@@ -15,17 +15,19 @@ The most common failure mode of AI-assisted coding is jumping straight to implem
 
 ## Tooling: spec-kit
 
-This workflow uses [spec-kit](https://github.com/github/spec-kit) to scaffold and manage the specification directory structure.
+This workflow is powered by the [spec-kit CLI](https://github.com/github/spec-kit). For installation, initialization, slash commands, and project state detection, load the **`spec-kit` skill**.
+
+Quick reference for the impatient — initialize a project with `uvx` (no install required):
 
 ```bash
 # New project
-uvx --from git+https://github.com/github/spec-kit.git specify init my-project --ai <agent>
+uvx --from git+https://github.com/github/spec-kit.git specify init <project-name> --ai opencode
 
 # Existing project
-uvx --from git+https://github.com/github/spec-kit.git specify init . --here --ai <agent>
+uvx --from git+https://github.com/github/spec-kit.git specify init . --here --ai opencode
 ```
 
-Supported `--ai` values: `copilot`, `claude`, `opencode`, `cursor-agent`, `codex`, `windsurf`, and others. This creates agent-specific command files and the `.specify/` directory structure.
+Supported `--ai` values: `opencode`, `claude`, `copilot`, `cursor-agent`, `codex`, `windsurf`, and others.
 
 ## Directory Structure
 
@@ -47,6 +49,8 @@ project/
         ├── quickstart.md
         └── tasks.md
 ```
+
+> For full CLI setup, slash commands, and state detection, see the **`spec-kit` skill**.
 
 ## Phases Overview
 
@@ -195,5 +199,6 @@ Key reminders:
 - [references/feature-spec-template.md](references/feature-spec-template.md) — Full spec template to copy
 - [references/constitution-template.md](references/constitution-template.md) — Constitution template
 - [references/data-model-guide.md](references/data-model-guide.md) — Data model authoring guide
+- **`spec-kit` skill** — CLI installation, slash commands, project state detection
 - [SDD philosophy](https://github.com/github/spec-kit/blob/main/spec-driven.md) — The full spec-driven development manifesto
 - [spec-kit repo](https://github.com/github/spec-kit) — Tooling source and docs
