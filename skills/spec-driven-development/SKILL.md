@@ -1,8 +1,7 @@
 ---
 name: spec-driven-development
-description: Structured spec-driven development workflow. Use when starting a new feature, building a system from scratch, or when requirements are unclear. Guides the agent through six phases: constitution → specification → clarification → plan → tasks → implement. Never skip phases.
+description: Structured spec-driven development workflow. Use when starting a new feature, building a system from scratch, or when requirements are unclear. Guides the agent through six phases constitution → specification → clarification → plan → tasks → implement. Never skip phases.
 license: MIT
-compatibility: Designed for coding agents with file read/write and bash execution capabilities.
 metadata:
   author: shaunburdick
   version: "2.0.0"
@@ -51,14 +50,14 @@ project/
 
 ## Phases Overview
 
-| # | Phase | Owner | Output | Gate |
-|---|-------|-------|--------|------|
-| 1 | Constitution | Planner | `.specify/memory/constitution.md` | User approves |
-| 2 | Specification | Planner | `.specify/features/###-name.md` | User approves |
-| 3 | Clarification | Planner | Updated specs, zero ambiguities | Zero `[NEEDS CLARIFICATION]` markers |
-| 4 | Plan | Architect | `specs/###-name/plan.md` + supporting docs | User approves |
-| 5 | Tasks | Architect | `specs/###-name/tasks.md` | User approves |
-| 6 | Implement | Architect | Working, tested code | All acceptance criteria met |
+| #   | Phase         | Owner     | Output                                     | Gate                                 |
+| --- | ------------- | --------- | ------------------------------------------ | ------------------------------------ |
+| 1   | Constitution  | Planner   | `.specify/memory/constitution.md`          | User approves                        |
+| 2   | Specification | Planner   | `.specify/features/###-name.md`            | User approves                        |
+| 3   | Clarification | Planner   | Updated specs, zero ambiguities            | Zero `[NEEDS CLARIFICATION]` markers |
+| 4   | Plan          | Architect | `specs/###-name/plan.md` + supporting docs | User approves                        |
+| 5   | Tasks         | Architect | `specs/###-name/tasks.md`                  | User approves                        |
+| 6   | Implement     | Architect | Working, tested code                       | All acceptance criteria met          |
 
 **Never skip a phase.** Each gate exists to catch misunderstandings when they're cheap to fix.
 
@@ -69,6 +68,7 @@ project/
 Create `.specify/memory/constitution.md` **before anything else**. This is the north star for all decisions.
 
 Include:
+
 - **Core principles** (5–7 max — more dilutes them)
 - **Technical decisions** (stack, deployment, storage) with rationale for each
 - **Quality standards** (test coverage target, linting, type safety)
@@ -84,6 +84,7 @@ The constitution must be approved before writing any feature specs. All subseque
 Create `.specify/features/###-feature-name.md` for each feature. See [references/feature-spec-template.md](references/feature-spec-template.md) for the full template.
 
 Key sections:
+
 - **Problem Statement** — one paragraph, what and why
 - **User Stories** — `As a <role>, I want <action> so that <benefit>`
 - **Functional Requirements** — `FR-001`, `FR-002`, … (WHAT, not HOW)
@@ -93,6 +94,7 @@ Key sections:
 - **Edge Cases** — documented with expected behavior
 
 **What makes a requirement "executable":**
+
 - Concrete, not abstract: "respond within 500ms" not "respond quickly"
 - Measurable: "≥80% test coverage" not "good test coverage"
 - Explicit error handling: document 404, 500, timeout, empty state behavior
@@ -105,8 +107,9 @@ Key sections:
 Before handing off to planning, eliminate every ambiguity.
 
 **Process:**
+
 1. Ask 3–5 targeted questions at a time (not a wall of 20)
-2. For each question, explain *why* the answer matters
+2. For each question, explain _why_ the answer matters
 3. Give an example of what a complete answer looks like
 4. Document every answer as a new concrete requirement (`FR-007a`, `FR-007b`, etc.)
 5. Update the spec version (`v1.0` → `v1.1`) and add a "Clarifications Applied" section
@@ -137,6 +140,7 @@ Produce the following files in `specs/###-feature-name/`:
 **`quickstart.md`** — Setup instructions, how to run tests, key flows to validate manually, expected outputs.
 
 After planning:
+
 ```bash
 .specify/scripts/bash/update-agent-context.sh <agent>
 ```
@@ -162,6 +166,7 @@ Create `specs/###-feature-name/tasks.md`:
 ```
 
 Rules:
+
 - Each task completable in one sitting
 - Mark parallel-safe tasks with `[P]`
 - Order by dependency — foundational tasks first
