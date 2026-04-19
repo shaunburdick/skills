@@ -27,6 +27,14 @@ npx skills add shaunburdick/skills -a claude-code -a opencode
 
 Structured spec-driven development workflow: clarify requirements, write specs, plan architecture, break into tasks, then implement. Use when starting a new feature, building from scratch, or when requirements are unclear.
 
+### [git-safety](skills/git-safety/)
+
+Enforces safe git practices for AI coding agents. Defines branch protection rules (never commit to main/master/develop), commit policies, amend rules, and recommended agent permissions. Use when configuring any agent that writes code and commits to git repositories.
+
+### [code-quality](skills/code-quality/)
+
+Enforces non-negotiable code quality standards: zero lint suppressions (`eslint-disable`, `@ts-ignore`, etc.), strict TypeScript type safety (no `any`), and a mandatory pre-commit verification protocol. Use when any agent writes, edits, or reviews code.
+
 ### [style](skills/style/)
 
 Install @shaunburdick's personal style configuration: shared `.editorconfig` for any project, plus `eslint-config-shaunburdick` for JavaScript/TypeScript projects.

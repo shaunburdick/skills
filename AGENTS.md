@@ -24,6 +24,8 @@ All skills live under `skills/` — this is the canonical directory the `skills`
 
 ## Adding a New Skill
 
+> **Tip**: Use the `skill-creator` skill when creating or improving skills in this repo. Load it with your agent to get guided workflows for authoring, testing, and optimizing `SKILL.md` files — including description tuning, eval runs, and variance analysis.
+
 1. Create a directory: `skills/<skill-name>/`
    - Name must be lowercase letters, numbers, and hyphens only
    - No leading/trailing hyphens, no consecutive hyphens (`--`)
