@@ -43,6 +43,10 @@ Enforces non-negotiable code quality standards: zero lint suppressions (`eslint-
 
 Install @shaunburdick's personal style configuration: shared `.editorconfig` for any project, plus `eslint-config-shaunburdick` for JavaScript/TypeScript projects.
 
+### [github-actions](skills/github-actions/)
+
+Author secure, maintainable GitHub Actions workflows with security-first defaults. Every third-party action is pinned to a full commit SHA (never a mutable tag), permissions are least-privilege, and dependencies stay current with Dependabot. Covers supply-chain hardening, reusable workflows vs. composite actions, OIDC auth, and the OpenSSF Scorecard. Use for any CI/CD or workflow automation task.
+
 ## Skill Structure
 
 Each skill lives in `skills/<skill-name>/` and contains:
