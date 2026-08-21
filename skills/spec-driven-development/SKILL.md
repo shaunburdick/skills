@@ -1,6 +1,6 @@
 ---
 name: spec-driven-development
-description: Structured spec-driven development workflow. Load this skill whenever starting a new feature, building a system from scratch, requirements are unclear, or a user asks to "plan", "spec out", "design", or "architect" something — even if they don't use the word "spec". Guides the agent through six phases: constitution → specification → clarification → plan → tasks → implement. Never skip phases.
+description: Structured spec-driven development workflow. Load this skill whenever starting a new feature, building a system from scratch, requirements are unclear, or a user asks to "plan", "spec out", "design", or "architect" something — even if they don't use the word "spec". Guides the agent through six phases, constitution → specification → clarification → plan → tasks → implement. Never skip phases.
 license: MIT
 metadata:
   author: shaunburdick
