@@ -1,6 +1,6 @@
 # Feature Spec Template
 
-Copy this template to `.specify/features/###-feature-name.md`. Replace all `<placeholder>` values. Never leave `[NEEDS CLARIFICATION]` markers when handing off to planning.
+Copy this template to `specs/###-feature-name/spec.md`. Replace all `<placeholder>` values. Never leave `[NEEDS CLARIFICATION]` markers when handing off to planning.
 
 ---
 
