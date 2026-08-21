@@ -4,7 +4,7 @@ description: Structured spec-driven development workflow. Load this skill whenev
 license: MIT
 metadata:
   author: shaunburdick
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Spec-Driven Development
@@ -21,13 +21,13 @@ Quick reference for the impatient — initialize a project with `uvx` (no instal
 
 ```bash
 # New project
-uvx --from git+https://github.com/github/spec-kit.git specify init <project-name> --ai opencode
+uvx --from git+https://github.com/github/spec-kit.git specify init <project-name> --integration opencode
 
 # Existing project
-uvx --from git+https://github.com/github/spec-kit.git specify init . --here --ai opencode
+uvx --from git+https://github.com/github/spec-kit.git specify init . --here --integration opencode
 ```
 
-Supported `--ai` values: `opencode`, `claude`, `copilot`, `cursor-agent`, `codex`, `windsurf`, and others.
+Supported `--integration` values include `opencode`, `claude`, `copilot`, `cursor-agent`, `codex`, `gemini`, and many others — run `specify integration list` from an initialized project for the full catalog.
 
 ## Directory Structure
 
@@ -35,19 +35,19 @@ Supported `--ai` values: `opencode`, `claude`, `copilot`, `cursor-agent`, `codex
 project/
 ├── .specify/
 │   ├── memory/
-│   │   └── constitution.md          # Project principles — created FIRST
-│   ├── features/
-│   │   ├── 001-feature-name.md      # Feature specifications
-│   │   └── 002-feature-name.md
+│   │   └── constitution.md          # Project principles — scaffolded at init, refined FIRST
 │   └── scripts/bash/                # spec-kit helper scripts
-└── specs/                           # Created during planning phase
-    └── 001-feature-name/
-        ├── plan.md
-        ├── research.md
-        ├── data-model.md
-        ├── contracts/
-        ├── quickstart.md
-        └── tasks.md
+└── specs/                           # One directory per feature, at the repo root
+    ├── 001-feature-name/
+    │   ├── spec.md                  # Feature specification (/speckit.specify)
+    │   ├── plan.md                  # Created during planning phase
+    │   ├── research.md
+    │   ├── data-model.md
+    │   ├── contracts/
+    │   ├── quickstart.md
+    │   └── tasks.md
+    └── 002-feature-name/
+        └── ...
 ```
 
 > For full CLI setup, slash commands, and state detection, see the **`spec-kit` skill**.
@@ -57,7 +57,7 @@ project/
 | #   | Phase         | Owner     | Output                                     | Gate                                 |
 | --- | ------------- | --------- | ------------------------------------------ | ------------------------------------ |
 | 1   | Constitution  | Planner   | `.specify/memory/constitution.md`          | User approves                        |
-| 2   | Specification | Planner   | `.specify/features/###-name.md`            | User approves                        |
+| 2   | Specification | Planner   | `specs/###-name/spec.md`                   | User approves                        |
 | 3   | Clarification | Planner   | Updated specs, zero ambiguities            | Zero `[NEEDS CLARIFICATION]` markers |
 | 4   | Plan          | Architect | `specs/###-name/plan.md` + supporting docs | User approves                        |
 | 5   | Tasks         | Architect | `specs/###-name/tasks.md`                  | User approves                        |
@@ -85,7 +85,7 @@ The constitution must be approved before writing any feature specs. All subseque
 
 ## Phase 2: Specification
 
-Create `.specify/features/###-feature-name.md` for each feature. See [references/feature-spec-template.md](references/feature-spec-template.md) for the full template.
+Create `specs/###-feature-name/spec.md` for each feature (the `/speckit.specify` command scaffolds this via the helper scripts). See [references/feature-spec-template.md](references/feature-spec-template.md) for the full template.
 
 Key sections:
 
@@ -143,11 +143,7 @@ Produce the following files in `specs/###-feature-name/`:
 
 **`quickstart.md`** — Setup instructions, how to run tests, key flows to validate manually, expected outputs.
 
-After planning:
-
-```bash
-.specify/scripts/bash/update-agent-context.sh <agent>
-```
+After planning, agent context files are managed by the integrations system — if you changed agents or upgraded spec-kit, refresh with `specify integration upgrade`.
 
 **Gate:** Present the plan. Do not proceed until approved.
 
