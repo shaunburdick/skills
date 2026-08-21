@@ -4,7 +4,7 @@ description: Structured spec-driven development workflow. Load this skill whenev
 license: MIT
 metadata:
   author: shaunburdick
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Spec-Driven Development
