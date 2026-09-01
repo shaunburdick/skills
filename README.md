@@ -47,6 +47,10 @@ Install @shaunburdick's personal style configuration: shared `.editorconfig` for
 
 Author secure, maintainable GitHub Actions workflows with security-first defaults. Every third-party action is pinned to a full commit SHA (never a mutable tag), permissions are least-privilege, and dependencies stay current with Dependabot. Covers supply-chain hardening, reusable workflows vs. composite actions, OIDC auth, and the OpenSSF Scorecard. Use for any CI/CD or workflow automation task.
 
+### [web-component-design](skills/web-component-design/)
+
+Design, build, test, and integrate standards-based custom elements and framework-agnostic Web Components. Covers lifecycle timing, Light DOM and Shadow DOM composition, accessibility, registration, SSR boundaries, CSS integration, React interoperability, Vitest/Playwright testing, and package design. Use when building web components, custom elements, or any work involving `customElements.define`, `HTMLElement`, slots, or `attachShadow`.
+
 ## Skill Structure
 
 Each skill lives in `skills/<skill-name>/` and contains:
