@@ -1,10 +1,10 @@
 ---
 name: web-component-design
-description: Design, build, test, and integrate standards-based custom elements and framework-agnostic Web Components. Covers lifecycle timing, Light DOM and Shadow DOM composition, accessibility, registration, SSR boundaries, CSS integration, React interoperability, Vitest/Playwright testing, and package design. Use when asked to "build a web component", "create a custom element", "design a framework-agnostic component", "use Shadow DOM", "use Light DOM", "integrate with React/Vue/Svelte", or any work involving `customElements.define`, `HTMLElement`, slots, or `attachShadow`.
+description: Design, build, test, and integrate standards-based custom elements and framework-agnostic Web Components. Covers lifecycle timing, Light DOM and Shadow DOM composition, accessibility, form submission with ElementInternals, registration, SSR boundaries, CSS integration, React interoperability, Vitest/Playwright testing, and package design. Use when asked to "build a web component", "create a custom element", "design a framework-agnostic component", "use Shadow DOM", "use Light DOM", "integrate with React/Vue/Svelte", "submit a form from a custom element", or any work involving `customElements.define`, `HTMLElement`, slots, `attachShadow`, or `attachInternals`.
 license: MIT
 metadata:
   author: shaunburdick
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Web Component Design
@@ -229,6 +229,101 @@ Use `role="status"`/`aria-live="polite"` for ordinary status and `role="alert"`/
 Decorative visuals should use `aria-hidden="true"`. Informative primitives should have a meaningful accessible name, commonly with `role="img"` and `aria-label`.
 
 Never rely on color alone to communicate state; add text, shape, labels, or other redundant encoding.
+
+## Form Integration and ElementInternals
+
+### The submit button problem
+
+Browsers only recognize **native** `<button>`, `<input type="submit">`, and `<input type="image">` as form submit buttons. A custom element like `<my-button type="submit">` inside a `<form>` will **not** trigger form submission when clicked — the form's `submit` event never fires, `onSubmit` handlers are never called, and `requestSubmit()` is never invoked.
+
+This is a silent failure: the element renders correctly, but clicking it does nothing inside a form context.
+
+### The fix: ElementInternals API
+
+Use the standards-based `ElementInternals` API to make custom elements participate in form submission:
+
+```ts
+class MyButton extends HTMLElement {
+    static formAssociated = true;
+
+    private _internals: ElementInternals;
+
+    constructor() {
+        super();
+        this._internals = this.attachInternals();
+
+        this.addEventListener('click', this._handleClick);
+    }
+
+    _handleClick = () => {
+        if (this.getAttribute('type') === 'submit' && this._internals.form) {
+            // Use requestSubmit(), NOT form.submit()
+            // requestSubmit() fires the 'submit' event and respects validation
+            // form.submit() bypasses validation and the submit event
+            this._internals.form.requestSubmit();
+        }
+    };
+
+    disconnectedCallback() {
+        this.removeEventListener('click', this._handleClick);
+    }
+}
+
+customElements.define('my-button', MyButton);
+```
+
+### Key rules
+
+1. **`static formAssociated = true`** must be on the class passed to `customElements.define()` — not on a parent class.
+2. **`this.attachInternals()`** can only be called **once** per element instance — must be in the constructor.
+3. **Use `form.requestSubmit()`** not `form.submit()` — `requestSubmit()` fires the `submit` event, triggers constraint validation, and respects `novalidate`; `form.submit()` bypasses all of that.
+4. **Click listener on the host** — for Light DOM components, the click on the internal `<button>` bubbles up to the host naturally.
+5. **Clean up** in `disconnectedCallback` to prevent leaks on element reuse.
+
+### When to apply
+
+Any custom element that replaces a native `<button type="submit">`, `<input type="submit">`, or `<input type="image">` inside a `<form>` **must** use ElementInternals. Without it, form submission is silently broken.
+
+Elements with `type="button"` (non-submit) that use `onClick` handlers are **not affected** — they don't participate in form submission.
+
+### Browser support
+
+- Chrome 87+ (Nov 2020)
+- Firefox 97+ (Feb 2022)
+- Safari 16.4+ (Mar 2023)
+
+Covers all browsers supporting ES2022 modules.
+
+### Testing gap: happy-dom
+
+happy-dom (used by Vitest) does **not** implement `attachInternals()`. Tests will throw `TypeError: this.attachInternals is not a function`. Add a polyfill:
+
+```ts
+// tests/setup-element-internals.ts
+if (typeof HTMLElement !== 'undefined' && !HTMLElement.prototype.attachInternals) {
+    HTMLElement.prototype.attachInternals = function (this: Element) {
+        const host = this;
+        const internals = {
+            form: null,
+            labels: [],
+            validity: { valid: true, valueMissing: false },
+            setFormValue: () => {},
+            setValidity: () => {},
+            checkValidity: () => true,
+            reportValidity: () => true,
+        };
+
+        // Make `form` a dynamic getter so it resolves at read time
+        Object.defineProperty(internals, 'form', {
+            get() {
+                return host.closest('form');
+            },
+        });
+
+        return internals as unknown as ElementInternals;
+    };
+}
+```
 
 ## CSS and Visual Integration
 
