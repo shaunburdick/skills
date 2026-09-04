@@ -51,6 +51,10 @@ Author secure, maintainable GitHub Actions workflows with security-first default
 
 Design, build, test, and integrate standards-based custom elements and framework-agnostic Web Components. Covers lifecycle timing, Light DOM and Shadow DOM composition, accessibility, registration, SSR boundaries, CSS integration, React interoperability, Vitest/Playwright testing, and package design. Use when building web components, custom elements, or any work involving `customElements.define`, `HTMLElement`, slots, or `attachShadow`.
 
+### [orchestration](skills/orchestration/)
+
+Wave-based task orchestration for spec-driven Phase 6 delivery. Covers sub-agent dispatch, parallel wave execution, state management via `orchestration.md`, user checkpoints, blocker/failure handling, testing philosophy, and PR workflow. Use when an agent needs to drive implementation across multiple tasks or sub-agents — whether that's a standalone orchestrator agent or a project-manager handling a large feature.
+
 ## Skill Structure
 
 Each skill lives in `skills/<skill-name>/` and contains:
