@@ -1,10 +1,10 @@
 ---
 name: spec-driven-development
-description: Structured spec-driven development workflow. Load this skill whenever starting a new feature, building a system from scratch, requirements are unclear, or a user asks to "plan", "spec out", "design", or "architect" something — even if they don't use the word "spec". Guides the agent through six phases, constitution → specification → clarification → plan → tasks → implement. Never skip phases.
+description: Structured spec-driven development workflow. Load this skill whenever starting a new feature, building a system from scratch, requirements are unclear, or a user asks to "plan", "spec out", "design", or "architect" something — even if they don't use the word "spec". Guides the agent through six phases, constitution → specification → clarification → plan → tasks → implement. Never skip phases. Always review existing specs before creating new ones — amend existing specs when work falls within their domain.
 license: MIT
 metadata:
   author: shaunburdick
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 # Spec-Driven Development
@@ -84,6 +84,23 @@ The constitution must be approved before writing any feature specs. All subseque
 ---
 
 ## Phase 2: Specification
+
+### Triage: Existing Specs First
+
+Before creating any new spec, **scan all existing specs** to determine whether this work belongs to an existing spec. See [references/spec-triage-guide.md](references/spec-triage-guide.md) for the full decision matrix and examples.
+
+**Process:**
+
+1. Run `ls specs/` to list all existing spec directories.
+2. For each spec, read the title, problem statement, and functional requirements (first ~30 lines of `spec.md`).
+3. Ask: "Does this work modify, extend, or fix something described in an existing spec?"
+4. **If yes** → amend the existing spec (bump version, add FRs, update ACs, add change log entry). Skip to the "Key sections" section below to update the spec in place.
+5. **If no** → create a new spec as described below.
+6. **If ambiguous** → ask the user before proceeding.
+
+**Common mistake to avoid:** "Improve combat" is not a new feature — it's an amendment to the combat spec. "Add inventory system" is a new feature. When in doubt, check.
+
+### Create the Spec
 
 Create `specs/###-feature-name/spec.md` for each feature (the `/speckit.specify` command scaffolds this via the helper scripts). See [references/feature-spec-template.md](references/feature-spec-template.md) for the full template.
 
@@ -195,6 +212,7 @@ Key reminders:
 - [references/feature-spec-template.md](references/feature-spec-template.md) — Full spec template to copy
 - [references/constitution-template.md](references/constitution-template.md) — Constitution template
 - [references/data-model-guide.md](references/data-model-guide.md) — Data model authoring guide
+- [references/spec-triage-guide.md](references/spec-triage-guide.md) — When to amend existing specs vs. create new ones
 - **`spec-kit` skill** — CLI installation, slash commands, project state detection
 - [SDD philosophy](https://github.com/github/spec-kit/blob/main/spec-driven.md) — The full spec-driven development manifesto
 - [spec-kit repo](https://github.com/github/spec-kit) — Tooling source and docs
