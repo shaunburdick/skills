@@ -4,7 +4,7 @@ description: Enforces safe git practices for AI coding agents. Defines branch pr
 license: MIT
 metadata:
   author: shaunburdick
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Git Safety
@@ -382,34 +382,52 @@ If you skip this step, the trailer uses a generic attribution.
 
 #### Step 2: Ensure Hook Exists
 
-Check if `.git/hooks/prepare-commit-msg` exists. If not, install it from
-your agent framework's skill directory or create one.
-
-> **Note**: `.git/hooks/` is not tracked by git. The hook must be installed
-> per-repo. If you clone the repo fresh, you'll need to run this step again.
+First, resolve the hook directory. Git uses `core.hooksPath` when set (e.g.,
+Husky sets it to `.husky/_/`). When unset, it defaults to `.git/hooks/`.
 
 ```bash
-test -f .git/hooks/prepare-commit-msg && echo "exists" || echo "missing"
+HOOK_DIR=$(git config core.hooksPath 2>/dev/null || true)
+HOOK_DIR="${HOOK_DIR:-.git/hooks}"
+HOOK_PATH="${HOOK_DIR}/prepare-commit-msg"
 ```
+
+> **Note**: Hook directories are not tracked by git. The hook must be
+> installed per-repo. If you clone the repo fresh, you'll need to run this
+> step again.
+
+Check if the hook exists at the resolved path:
+
+```bash
+test -f "$HOOK_PATH" && echo "exists" || echo "missing"
+```
+
+**Common hook managers and their paths:**
+
+| Tool | `core.hooksPath` | Hook directory |
+|------|------------------|----------------|
+| Git (default) | unset | `.git/hooks/` |
+| Husky v9 | `.husky/_/` | `.husky/_/` |
+| Lefthook | unset (uses `.git/hooks/`) | `.git/hooks/` |
+| simple-git-hooks | respects existing | wherever `core.hooksPath` points |
 
 **If missing**, copy the hook from your agent framework's skill directory:
 
 ```bash
 # Example path — adjust to your framework's skill location
-cp .agents/skills/git-safety/scripts/prepare-commit-msg .git/hooks/prepare-commit-msg
-chmod +x .git/hooks/prepare-commit-msg
+cp .agents/skills/git-safety/scripts/prepare-commit-msg "$HOOK_PATH"
+chmod +x "$HOOK_PATH"
 ```
 
 **If exists but missing attribution logic**, check for the marker:
 
 ```bash
-grep -q "OPENCODE\|AGENT" .git/hooks/prepare-commit-msg && echo "has attribution" || echo "needs update"
+grep -q "OPENCODE\|AGENT" "$HOOK_PATH" && echo "has attribution" || echo "needs update"
 ```
 
 If it needs update, append the attribution block:
 
 ```bash
-cat >> .git/hooks/prepare-commit-msg << 'HOOK'
+cat >> "$HOOK_PATH" << 'HOOK'
 
 # --- AI Commit Attribution (added by git-safety skill) ---
 commit_msg_file="${1:-}"
@@ -454,11 +472,16 @@ when the agent environment variable is set.
 After setup, verify the hook is installed:
 
 ```bash
+# Resolve hook path (same as setup)
+HOOK_DIR=$(git config core.hooksPath 2>/dev/null || true)
+HOOK_DIR="${HOOK_DIR:-.git/hooks}"
+HOOK_PATH="${HOOK_DIR}/prepare-commit-msg"
+
 # Check hook exists and is executable
-ls -la .git/hooks/prepare-commit-msg
+ls -la "$HOOK_PATH"
 
 # Check hook contains attribution logic
-grep -q "OPENCODE\|AGENT" .git/hooks/prepare-commit-msg && echo "hook has attribution" || echo "hook needs update"
+grep -q "OPENCODE\|AGENT" "$HOOK_PATH" && echo "hook has attribution" || echo "hook needs update"
 
 # Check env vars are set (in agent session)
 echo "OPENCODE=${OPENCODE:-unset} OPENCODE_AGENT=${OPENCODE_AGENT:-unset} OPENCODE_MODEL=${OPENCODE_MODEL:-unset}"
@@ -469,8 +492,13 @@ echo "OPENCODE=${OPENCODE:-unset} OPENCODE_AGENT=${OPENCODE_AGENT:-unset} OPENCO
 To remove AI attribution from a repo:
 
 ```bash
+# Resolve hook path
+HOOK_DIR=$(git config core.hooksPath 2>/dev/null || true)
+HOOK_DIR="${HOOK_DIR:-.git/hooks}"
+HOOK_PATH="${HOOK_DIR}/prepare-commit-msg"
+
 # Remove the hook (only if it was installed by this skill)
-rm -f .git/hooks/prepare-commit-msg
+rm -f "$HOOK_PATH"
 ```
 
 If the hook was appended to an existing hook (not installed fresh), you'll
