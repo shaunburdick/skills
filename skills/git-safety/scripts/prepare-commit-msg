@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# prepare-commit-msg — auto-append Generated-By trailer for AI commits
+#
+# Install:
+#   cp .agents/skills/git-safety/scripts/prepare-commit-msg .git/hooks/prepare-commit-msg
+#   chmod +x .git/hooks/prepare-commit-msg
+#
+# This hook checks for OPENCODE=1 or AGENT=1 environment variables (set
+# automatically by agent frameworks). If present, it appends a
+# Generated-By trailer. If absent (human terminal commit), it exits silently.
+#
+# Optional env vars for richer attribution:
+#   OPENCODE_AGENT  — agent name (e.g., "my-agent")
+#   OPENCODE_MODEL  — model ID (e.g., "my-model")
+
+set -euo pipefail
+
+commit_msg_file="$1"
+commit_source="${2:-}"
+
+# Skip for merge, squash, and amend commits (not regular commits)
+# commit_source values: "message" (-m), "template" (-t), "merge", "squash", "commit" (amend)
+case "${commit_source}" in
+  merge|squash|commit)
+    exit 0
+    ;;
+esac
+
+# Check if this is an AI session
+if [[ "${OPENCODE:-}" != "1" ]] && [[ "${AGENT:-}" != "1" ]]; then
+  exit 0
+fi
+
+# Skip if trailer already exists (avoid duplicates on amend)
+if grep -q "^Generated-By:" "$commit_msg_file"; then
+  exit 0
+fi
+
+# Build the attribution string
+agent="${OPENCODE_AGENT:-}"
+model="${OPENCODE_MODEL:-}"
+
+if [[ -n "$agent" ]] && [[ -n "$model" ]]; then
+  attribution="${agent} (model: ${model})"
+elif [[ -n "$agent" ]]; then
+  attribution="$agent"
+else
+  attribution="opencode"
+fi
+
+# Append trailer
+printf "\nGenerated-By: %s\n" "$attribution" >> "$commit_msg_file"
