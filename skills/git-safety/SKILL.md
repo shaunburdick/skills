@@ -90,3 +90,7 @@ Examples:
 - `feat: add user authentication endpoint`
 - `fix: resolve null pointer in payment processor`
 - `docs: update API contract for order service`
+
+## Related Skills
+
+- **[ai-attribution](../ai-attribution/)**: Covers AI attribution footers for PR bodies, comments, and issues — surfaces beyond what this skill's commit hook handles.
