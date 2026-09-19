@@ -210,6 +210,26 @@ This skill provides the portable layer. Repos can add:
 These are optional and repo-specific. The skill ensures consistency
 regardless of repo-level tooling.
 
+## Related Skills and References
+
+- **[git-safety](../git-safety/)**: Installs an optional commit hook and
+  defines safe branch, push, and history-rewrite practices.
+- **[github-actions](../github-actions/)**: Use alongside the workflow
+  reference below when adding CI automation.
+- **[GitHub Actions workflow](references/github-actions.md)**: Optional
+  auto-labeling workflow; read before copying it into a repository.
+- **[PR template](references/pr-template.md)**: Optional human-facing
+  disclosure prompt.
+- **[Source disclosure](references/source-disclosure.md)**: Optional
+  file-level convention; use only when the project requires it.
+
+The commit-hook details intentionally live in `git-safety`; use this skill for
+surfaces beyond commits rather than loading both sections into context.
+
+> Attribution conventions are transparency aids, not legal advice or a
+> guarantee of regulatory compliance. Confirm applicable requirements with
+> the project's legal or compliance owner.
+
 ## Verification
 
 To find all AI-generated content across surfaces:

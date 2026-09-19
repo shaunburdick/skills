@@ -1,7 +1,8 @@
 # AI Attribution — Source Code Disclosure
 
-Optional source-level attribution using SPDX-style tags. This follows the
-W3C AI Content Disclosure vocabulary and the `ai-disclosure` convention.
+Optional source-level attribution using project-defined SPDX-style tags. These
+tags are a convention for documenting provenance, not an official SPDX
+standard or a guarantee of regulatory compliance.
 
 ## Format
 

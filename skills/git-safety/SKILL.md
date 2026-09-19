@@ -331,7 +331,7 @@ during git operations. Specifically:
 
 ## AI Commit Attribution
 
-All commits made by AI agents SHOULD include a `Generated-By` trailer to
+All commits made by AI agents MUST include a `Generated-By` trailer to
 transparently attribute AI-generated code. This follows the Apache Software
 Foundation's `Generated-by` convention and aligns with EU AI Act Article 50
 disclosure requirements. For attribution on PRs, comments, and issues, see
@@ -378,7 +378,7 @@ export OPENCODE_AGENT="<your-agent-name>"
 export OPENCODE_MODEL="<your-model-id>"
 ```
 
-If you skip this step, the trailer will use a generic attribution.
+If you skip this step, the trailer uses a generic attribution.
 
 #### Step 2: Ensure Hook Exists
 
@@ -415,7 +415,7 @@ cat >> .git/hooks/prepare-commit-msg << 'HOOK'
 commit_msg_file="${1:-}"
 commit_source="${2:-}"
 case "${commit_source}" in
-  merge|squash|commit) exit 0 ;;
+  merge|squash) exit 0 ;;
 esac
 if [[ "${OPENCODE:-}" == "1" ]] || [[ "${AGENT:-}" == "1" ]]; then
   if ! grep -q "^Generated-By:" "$commit_msg_file"; then

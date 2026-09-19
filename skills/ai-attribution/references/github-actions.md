@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Detect AI attribution in PR body
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
             const body = context.payload.pull_request.body || '';
@@ -60,6 +60,9 @@ jobs:
 To also check commit messages for attribution trailers:
 
 ```yaml
+- name: Check out repository
+  uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v5.0.0
+
 - name: Check commit messages
   run: |
     BASE=${{ github.event.pull_request.base.sha }}
@@ -72,3 +75,7 @@ To also check commit messages for attribution trailers:
   env:
     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+The action references above are pinned to immutable commit SHAs. Update both
+the SHA and its version comment together when upgrading them; see the
+`github-actions` skill for the repository's workflow hardening rules.

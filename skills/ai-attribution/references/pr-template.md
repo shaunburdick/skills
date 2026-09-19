@@ -23,9 +23,9 @@ file to `.github/pull_request_template.md` in any repo.
 **If AI-generated or AI-assisted**, include the attribution footer in the
 PR body:
 
-```
+~~~
 Generated-By: <agent-name> (model: <model-name>)
-```
+~~~
 
 See the `ai-attribution` skill for format details.
 ```

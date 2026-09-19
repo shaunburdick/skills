@@ -18,10 +18,11 @@ set -euo pipefail
 commit_msg_file="$1"
 commit_source="${2:-}"
 
-# Skip for merge, squash, and amend commits (not regular commits)
+# Skip merge and squash commits; amend commits are still attributed when the
+# existing message does not already contain a trailer.
 # commit_source values: "message" (-m), "template" (-t), "merge", "squash", "commit" (amend)
 case "${commit_source}" in
-  merge|squash|commit)
+  merge|squash)
     exit 0
     ;;
 esac
