@@ -4,7 +4,7 @@ description: Enforces safe git practices for AI coding agents. Defines branch pr
 license: MIT
 metadata:
   author: shaunburdick
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Git Safety
@@ -349,38 +349,77 @@ AI agent only.
 
 ### How It Works
 
-If your environment provides a `prepare-commit-msg` hook that detects AI
-sessions (via env vars like `OPENCODE=1`, `AGENT=1`, or similar), the hook
-appends the trailer automatically. If absent (human terminal commit), it
-exits silently.
+A `prepare-commit-msg` hook appends the trailer when the commit environment
+identifies an AI session. Detection is layered — auto-detect, explicit claim,
+visible silence:
 
-**Optional env vars for richer attribution** (set at session start):
+1. **Auto-detect** — harnesses that set an environment marker on their
+   subprocesses are recognized from the signal matrix below.
+2. **Explicit claim** — OpenCode v2 sets no marker; its agents claim the
+   commit via `git-agent-commit` or inline `AI_AGENT=opencode git commit ...`.
+3. **Visible silence** — an OpenCode session with no claim (agent forgot, or
+   a human in the TUI terminal) is never misattributed; the hook prints a
+   stderr warning instead of failing silently.
+
+**Optional env vars for richer attribution** (set on the commit command line —
+see "OpenCode v2" below for why session-start exports don't work):
 
 ```bash
-export OPENCODE_AGENT="<your-agent-name>"
-export OPENCODE_MODEL="<your-model-id>"
+OPENCODE_AGENT="<your-agent-name>" OPENCODE_MODEL="<your-model-id>" \
+  git-agent-commit -m "..."
 ```
 
-If not set, the hook defaults to `Generated-By: opencode`.
+If not set, the hook defaults the trailer to the harness name (e.g.
+`Generated-By: opencode`).
 
-### Session-Start Setup
+### Detection (Signal Matrix)
+
+The hook treats the session as AI when **any** of these env vars is set to a
+non-empty value (not just `1`):
+
+`AI_AGENT`, `AGENT` (any value — `goose`/`amp` produce harness names),
+`OPENCODE`, `OPENCODE_CLIENT`, `CLAUDE_CODE`, `CLAUDE_CODE_ENTRYPOINT`,
+`CURSOR_AGENT`, `GEMINI_CLI`, `CODEX_SANDBOX`, `AUGMENT_AGENT`,
+`CLINE_ACTIVE`, `OPENCODE_AGENT`, `OPENCODE_MODEL`.
+
+`OPENCODE_TERMINAL` is **never** a detection signal (see below). The full
+per-harness table and notes live in
+[references/attribution-detection.md](references/attribution-detection.md).
+
+### OpenCode v2: Claim Your Commits
+
+OpenCode v2 (anomalyco/opencode) sets no AI-session marker — only
+`OPENCODE_TERMINAL=1`, on agent tool shells AND the human TUI terminal — and
+each bash tool call spawns a fresh login shell, so session-start exports do
+not persist. Claim each commit explicitly (full reasoning:
+[references/attribution-detection.md](references/attribution-detection.md)):
+
+```bash
+git-agent-commit -m "feat: add widget"              # Generated-By: opencode
+OPENCODE_AGENT="my-agent" OPENCODE_MODEL="my-model" \
+  git-agent-commit -m "feat: add widget"            # Generated-By: my-agent (model: my-model)
+# identical inline form:
+AI_AGENT=opencode OPENCODE_AGENT="my-agent" OPENCODE_MODEL="my-model" \
+  git commit -m "feat: add widget"
+```
+
+`git-agent-commit` ships in this skill's `scripts/` directory; copy it onto
+your PATH once per machine:
+
+```bash
+cp .agents/skills/git-safety/scripts/git-agent-commit ~/.local/bin/
+chmod +x ~/.local/bin/git-agent-commit
+```
+
+Trailer defaults: no `OPENCODE_AGENT` → harness name (e.g. `opencode`);
+`OPENCODE_AGENT` only → agent name; both → `<agent> (model: <model>)`.
+
+### Session Setup
 
 At the start of every session where you may make git commits, perform these
 steps **once**. Do not repeat them on every commit.
 
-#### Step 1: Set Attribution Env Vars (Optional)
-
-For richer attribution, set these env vars with your agent name and model
-from your system prompt:
-
-```bash
-export OPENCODE_AGENT="<your-agent-name>"
-export OPENCODE_MODEL="<your-model-id>"
-```
-
-If you skip this step, the trailer uses a generic attribution.
-
-#### Step 2: Ensure Hook Exists
+#### Step 1: Ensure Hook Exists
 
 First, resolve the hook directory. Git uses `core.hooksPath` when set (e.g.,
 Husky sets it to `.husky/_/`). When unset, it defaults to `.git/hooks/`.
@@ -421,51 +460,31 @@ chmod +x "$HOOK_PATH"
 **If exists but missing attribution logic**, check for the marker:
 
 ```bash
-grep -q "OPENCODE\|AGENT" "$HOOK_PATH" && echo "has attribution" || echo "needs update"
+grep -q "AI_AGENT\|OPENCODE_TERMINAL" "$HOOK_PATH" && echo "has attribution" || echo "needs update"
 ```
 
-If it needs update, append the attribution block:
+If it needs update, append the attribution block extracted from the shipped
+hook script — it is the single source of truth (no copy-paste divergence):
 
 ```bash
-cat >> "$HOOK_PATH" << 'HOOK'
+sed -n '/^# --- AI Commit Attribution/,/^# --- end AI Commit Attribution/p' \
+  .agents/skills/git-safety/scripts/prepare-commit-msg >> "$HOOK_PATH"
+```
 
-# --- AI Commit Attribution (added by git-safety skill) ---
-commit_msg_file="${1:-}"
-commit_source="${2:-}"
-case "${commit_source}" in
-  merge|squash) exit 0 ;;
-esac
-if [[ "${OPENCODE:-}" == "1" ]] || [[ "${AGENT:-}" == "1" ]]; then
-  if ! grep -q "^Generated-By:" "$commit_msg_file"; then
-    agent="${OPENCODE_AGENT:-}"
-    model="${OPENCODE_MODEL:-}"
-    if [[ -n "$agent" ]] && [[ -n "$model" ]]; then
-      attr="${agent} (model: ${model})"
-    elif [[ -n "$agent" ]]; then
-      attr="$agent"
-    else
-      attr="opencode"
-    fi
-    printf "\nGenerated-By: %s\n" "$attr" >> "$commit_msg_file"
-  fi
-fi
-# --- end AI Commit Attribution ---
-HOOK
-fi
+The extracted block is self-contained: it reads `$1`/`$2` (message file and
+commit source), skips merge/squash, applies the detection matrix, and appends
+the trailer or emits the unclaimed-session warning. Verify the result:
+
+```bash
+bash -n "$HOOK_PATH" && echo "hook syntax OK"
 ```
 
 ### Mixed Environments (AI + Human Commits)
 
-The hook is safe in mixed environments:
-
-| Scenario | Detection env | Hook behavior |
-|----------|---------------|---------------|
-| Agent session | `OPENCODE=1` or `AGENT=1` | appends `Generated-By:` trailer |
-| Human terminal | not set | exits immediately, no trailer |
-| Agent with env vars | `1` + `OPENCODE_AGENT`/`OPENCODE_MODEL` | appends rich attribution |
-
-Humans never need to opt out or take any action. The hook only activates
-when the agent environment variable is set.
+Humans never need to opt out — the hook only attributes when an agent marker
+or explicit claim is present, and `OPENCODE_TERMINAL` alone never
+misattributes a human commit. Scenario → behavior matrix:
+[references/attribution-detection.md](references/attribution-detection.md).
 
 ### Verification
 
@@ -481,10 +500,16 @@ HOOK_PATH="${HOOK_DIR}/prepare-commit-msg"
 ls -la "$HOOK_PATH"
 
 # Check hook contains attribution logic
-grep -q "OPENCODE\|AGENT" "$HOOK_PATH" && echo "hook has attribution" || echo "hook needs update"
+grep -q "AI_AGENT\|OPENCODE_TERMINAL" "$HOOK_PATH" && echo "hook has attribution" || echo "hook needs update"
 
-# Check env vars are set (in agent session)
-echo "OPENCODE=${OPENCODE:-unset} OPENCODE_AGENT=${OPENCODE_AGENT:-unset} OPENCODE_MODEL=${OPENCODE_MODEL:-unset}"
+# Check claim vars are set (in agent session)
+echo "AI_AGENT=${AI_AGENT:-unset} OPENCODE_AGENT=${OPENCODE_AGENT:-unset} OPENCODE_MODEL=${OPENCODE_MODEL:-unset}"
+```
+
+Run the skill's functional tests (covers AC-1..AC-9 from the feature spec):
+
+```bash
+bash .agents/skills/git-safety/scripts/test-prepare-commit-msg.sh
 ```
 
 ### Uninstall
@@ -507,18 +532,15 @@ need to manually remove the attribution block between the
 
 ### Parsing Attribution
 
-To find all AI-generated commits:
+Find AI-generated commits and unique agents/models — commands in
+[references/attribution-detection.md](references/attribution-detection.md).
+The essentials:
 
 ```bash
 git log --trailer=Generated-By --oneline
 ```
 
-To extract unique agents/models:
-
-```bash
-git log --format='%(trailers:valueonly,separator=%x2C,unfold,separator=%x2Ckey=Generated-By)' | sort | uniq -c | sort -rn
-```
-
 ## Related Skills
 
 - **[ai-attribution](../ai-attribution/)**: Covers AI attribution footers for PR bodies, comments, and issues — surfaces beyond what this skill's commit hook handles.
+- **[attribution-detection reference](references/attribution-detection.md)**: Full detection matrix, OpenCode v2 environment reality, and parsing commands.

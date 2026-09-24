@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+# test-prepare-commit-msg.sh — functional tests for scripts/prepare-commit-msg.
+#
+# Covers acceptance criteria AC-1..AC-9 from
+# specs/001-agent-attribution-detection/spec.md:
+#   AC-1  AI_AGENT=opencode            → Generated-By: opencode
+#   AC-2  AGENT=goose                  → Generated-By: goose
+#   AC-3  CLAUDE_CODE=1                → Generated-By: claude-code
+#   AC-4  OPENCODE_TERMINAL=1 (no claim) → no trailer + stderr warning
+#   AC-5  plain git commit (no vars)   → no trailer, no warning
+#   AC-6  existing Generated-By trailer + claim → no duplicate
+#   AC-7  merge/squash commit source   → hook skips regardless of env
+#   AC-8  AI_AGENT + OPENCODE_AGENT/MODEL → rich attribution
+#   AC-9  git-agent-commit wrapper     → byte-identical trailer
+#
+# Requires: bash 3.2+, git, coreutils. No other dependencies.
+#
+# Usage: bash skills/git-safety/scripts/test-prepare-commit-msg.sh
+
+set -u
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HOOK="$HERE/prepare-commit-msg"
+WRAPPER="$HERE/git-agent-commit"
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+pass=0
+fail=0
+
+report() { # report <ok|no> <name> <detail>
+  if [[ "$1" == "ok" ]]; then
+    pass=$((pass + 1))
+    printf 'PASS  %s\n' "$2"
+  else
+    fail=$((fail + 1))
+    printf 'FAIL  %s — %s\n' "$2" "$3"
+  fi
+}
+
+# Deterministic start: clear every detection var from the ambient environment
+# (this test may itself run inside an agent session).
+UNSET=(
+  -u AI_AGENT -u AGENT -u OPENCODE -u OPENCODE_TERMINAL -u OPENCODE_AGENT
+  -u OPENCODE_MODEL -u OPENCODE_CLIENT -u CLAUDE_CODE
+  -u CLAUDE_CODE_ENTRYPOINT -u CURSOR_AGENT -u GEMINI_CLI -u CODEX_SANDBOX
+  -u AUGMENT_AGENT -u CLINE_ACTIVE
+)
+
+cd "$TMP" || exit 1
+git init -q .
+git config user.name "Test"
+git config user.email "test@example.com"
+# Never GPG-sign in the throwaway repo (the ambient user may have
+# commit.gpgsign enabled globally and no signing key available).
+git config commit.gpgsign false
+mkdir -p .git/hooks
+cp "$HOOK" .git/hooks/prepare-commit-msg
+chmod +x .git/hooks/prepare-commit-msg
+
+run_case() { # run_case <name> <expected-trailer|-> <expect-warn|0|1> <env...> git commit <args...>
+  local name="$1" expected="$2" want_warn="$3"
+  shift 3
+  local out trailer warned=0 status problems=""
+  out="$(env "${UNSET[@]}" "$@" 2>&1)"
+  status=$?
+  trailer="$(git log -1 --format=%B | grep -m1 '^Generated-By:' || true)"
+  grep -q "without an AI attribution claim" <<<"$out" && warned=1
+
+  [[ "$status" -eq 0 ]] || problems="commit exited $status; "
+  if [[ "$expected" == "-" ]]; then
+    [[ -z "$trailer" ]] || problems+="expected no trailer, got '$trailer'; "
+  else
+    [[ "$trailer" == "$expected" ]] || problems+="expected '$expected', got '$trailer'; "
+  fi
+  if [[ "$want_warn" == "1" ]]; then
+    [[ "$warned" -eq 1 ]] || problems+="expected warning, none printed; "
+  else
+    [[ "$warned" -eq 0 ]] || problems+="unexpected warning printed; "
+  fi
+
+  if [[ -z "$problems" ]]; then
+    report ok "$name"
+  else
+    report no "$name" "${problems%; }"
+  fi
+}
+
+# AC-1 .. AC-5, AC-8: detection + attribution matrix
+run_case "AC-1  AI_AGENT=opencode"      "Generated-By: opencode"           0 AI_AGENT=opencode git commit --allow-empty -m "test: ac1"
+run_case "AC-2  AGENT=goose"            "Generated-By: goose"              0 AGENT=goose git commit --allow-empty -m "test: ac2"
+run_case "AC-2b AGENT=amp"              "Generated-By: amp"                0 AGENT=amp git commit --allow-empty -m "test: ac2b"
+run_case "AC-2c AGENT=other"            "Generated-By: agent"              0 AGENT=whatever git commit --allow-empty -m "test: ac2c"
+run_case "AC-3  CLAUDE_CODE=1"          "Generated-By: claude-code"        0 CLAUDE_CODE=1 git commit --allow-empty -m "test: ac3"
+run_case "AC-4  OPENCODE_TERMINAL only" "-"                                1 OPENCODE_TERMINAL=1 git commit --allow-empty -m "test: ac4"
+run_case "AC-5  plain commit"           "-"                                0 git commit --allow-empty -m "test: ac5"
+run_case "AC-8  rich attribution"       "Generated-By: my-agent (model: my-model)" 0 \
+  AI_AGENT=opencode OPENCODE_AGENT=my-agent OPENCODE_MODEL=my-model git commit --allow-empty -m "test: ac8"
+run_case "AC-8b OPENCODE_AGENT alone"   "Generated-By: my-agent"           0 OPENCODE_AGENT=my-agent git commit --allow-empty -m "test: ac8b"
+
+# AC-6: existing trailer must not be duplicated
+run_case "AC-6  dedupe existing trailer" "Generated-By: existing-agent"    0 AI_AGENT=opencode git commit --allow-empty -m "test: ac6
+
+Generated-By: existing-agent"
+
+# AC-7: merge/squash sources are skipped regardless of env
+msg_merge="$TMP/msg-merge.txt"
+printf 'Merge commit\n' > "$msg_merge"
+cp "$msg_merge" "$msg_merge.orig"
+env "${UNSET[@]}" AI_AGENT=opencode .git/hooks/prepare-commit-msg "$msg_merge" merge >/dev/null 2>&1
+if cmp -s "$msg_merge" "$msg_merge.orig"; then
+  report ok "AC-7  merge source skipped"
+else
+  report no "AC-7  merge source skipped" "hook modified the merge message"
+fi
+msg_squash="$TMP/msg-squash.txt"
+printf 'Squashed commits\n' > "$msg_squash"
+cp "$msg_squash" "$msg_squash.orig"
+env "${UNSET[@]}" AI_AGENT=opencode .git/hooks/prepare-commit-msg "$msg_squash" squash >/dev/null 2>&1
+if cmp -s "$msg_squash" "$msg_squash.orig"; then
+  report ok "AC-7b squash source skipped"
+else
+  report no "AC-7b squash source skipped" "hook modified the squash message"
+fi
+
+# AC-9: git-agent-commit wrapper produces the same trailer as the inline form
+run_case "AC-9  wrapper parity" "Generated-By: my-agent (model: my-model)" 0 \
+  OPENCODE_AGENT=my-agent OPENCODE_MODEL=my-model "$WRAPPER" --allow-empty -m "test: ac9"
+
+printf '\n%d passed, %d failed\n' "$pass" "$fail"
+[[ "$fail" -eq 0 ]]
