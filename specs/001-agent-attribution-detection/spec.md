@@ -173,3 +173,26 @@ no errors.
   as the project constitution. Spec/plan/tasks artifacts are committed
   lightweight (no spec-kit tooling initialized) to avoid polluting the skills
   repo with scaffolding.
+
+## Amendments
+
+- **A1 (Sep 23 2026) — follow-ups #3 and #2 in scope (user: "3 and 2 go in
+  this PR")**: the two deferred items are now done on this branch, tracking
+  the follow-ups listed in the PR body:
+  - **#3 SKILL.md size refactor**: `git-safety/SKILL.md` reduced 546 → 353
+    lines. The pre-existing `## PR and Commit Preflights` and
+    `## Permission-Denied Reporting and Escalation` (incl. Secret and
+    Encrypted-File Boundary) sections moved verbatim to
+    `references/preflight-checks.md` and
+    `references/permission-denied-reporting.md`, with mandatory-read pointer
+    sections and a quick reference left inline so the safety gates stay
+    discoverable. Body-equality of the moved sections verified via diff
+    against the pre-move extraction.
+  - **#2 plugin env-injection spike**: performed, findings recorded in
+    `references/attribution-detection.md` (Plugin Automation Spike section).
+    Verdict: v2.0.15 supports per-call env injection via
+    `ctx.shell.hook("create.before", ...)` (mutable `ShellCreateBefore.env`
+    reaches the spawned process), but the dev branch removed that path
+    (rewritten bash tool, no hook trigger, upstream TODO pending new V2
+    plugin hooks) — so no plugin ships; the claim convention remains the
+    version-stable mechanism.

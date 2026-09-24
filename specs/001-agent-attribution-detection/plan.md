@@ -97,7 +97,7 @@ exits nonzero on any failure. Uses only bash builtins + coreutils.
 | Decision | Choice | Rationale |
 |---|---|---|
 | Detection basis | Env-var matrix, not process-tree | Process tree false-positives on the OpenCode TUI terminal (Design D rejected) |
-| OpenCode v2 path | Explicit claim (wrapper/inline env) | v2 provides no signal; plugin (Design B) and upstream (Design C) deferred |
+| OpenCode v2 path | Explicit claim (wrapper/inline env) | v2 provides no signal; plugin (Design B) spiked and upstream (Design C) tracked — spike verdict: v2.0.15 supports `ctx.shell.hook("create.before")` env injection, dev removes it; not shippable today |
 | Signal values | Non-empty, not `== "1"` | Goose/Amp set `AGENT=goose`/`AGENT=amp`; fixes a live bug |
 | Failure mode | Warn (stderr), never block | Attribution advisory; human TUI-terminal commits get a benign notice |
 | Default trailer | Harness name when unclaimed identity | Richer attribution than the old blanket `opencode` |

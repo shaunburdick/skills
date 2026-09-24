@@ -9,3 +9,8 @@ Ordered by dependency. `[P]` marks parallel-safe tasks.
 - [x] T-005: Update `skills/ai-attribution/SKILL.md` — FR-007: Git Commits surface references the cross-harness matrix; version 1.0.0 → 1.1.0.
 - [x] T-006: Verify — `bash -n` on all scripts (OK), shellcheck not installed (noted), `test-prepare-commit-msg.sh` 13/13 green, sed-extraction install path validated end-to-end, no bash 4+ syntax (AC-10), docs free of stale claims (AC-11).
 - [x] T-007: Release — `git identity` check (Shaun Burdick <github@shaunburdick.com>), commit `bda9bf8`, pushed to origin, PR opened: https://github.com/shaunburdick/skills/pull/9 (body carries the `Generated-By` footer per ai-attribution).
+
+Follow-up wave (user: "3 and 2 go in this PR"):
+
+- [x] T-008: SKILL.md size refactor — move the pre-existing `## PR and Commit Preflights` and `## Permission-Denied Reporting and Escalation` sections (incl. Secret and Encrypted-File Boundary) verbatim into `references/preflight-checks.md` and `references/permission-denied-reporting.md`; replace with mandatory-read pointer sections + quick reference; SKILL.md 546 → 353 lines (under 500). Body-equality verified by diff against the extraction.
+- [x] T-009: Plugin env-injection spike — investigated anomalyco/opencode at `v2.0.15` vs `dev`: v2.0.15 exposes `ctx.shell.hook("create.before", ...)` with mutable `ShellCreateBefore.env` reaching the spawned process (per-call, race-free); dev removed it (bash tool rewritten via `ChildProcess.make`, no hook trigger; upstream TODO: "Add plugin shell.env environment augmentation once V2 plugin hooks exist"). Findings documented in `references/attribution-detection.md` → verdict: not shippable today; claim convention remains the supported path.

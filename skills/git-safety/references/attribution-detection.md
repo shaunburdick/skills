@@ -105,3 +105,41 @@ git log --format='%(trailers:valueonly,separator=%x2C,unfold,separator=%x2Ckey=G
 - OpenCode v2 does not yet set an AI marker on tool-executed ptys; an
   upstream feature request is the long-term fix (tracked separately).
 - The detection matrix here is maintained in sync with `scripts/prepare-commit-msg`.
+
+### Plugin Automation Spike (Sep 2026)
+
+Question: can an OpenCode v2 plugin make claiming fully automatic by injecting
+attribution env into the shell tool?
+
+**Verdict: yes on v2.0.15 (current release), no on dev — so not shippable
+today; the claim convention remains the supported path.**
+
+Findings (source: anomalyco/opencode source at tag `v2.0.15` vs `dev`):
+
+- **v2.0.15 — clean path exists.** The plugin context exposes
+  `ctx.shell.hook("create.before", fn)` (`packages/plugin/src/effect/shell.ts`):
+  the callback receives a mutable `ShellCreateBefore` record
+  `{ command, cwd, timeout, shell, env }`. The core Shell service builds
+  `invocation.env = { ...(sessionEnvironment ?? process.env) }`, triggers the
+  hooks, then spawns with the mutated `env` (`packages/core/src/shell.ts`).
+  Tool shell calls flow through this path (`shell.create`), so the hook fires
+  for agent tool shells, per-call and race-free. A plugin could set
+  `AI_AGENT=opencode` (plus `OPENCODE_AGENT`/`OPENCODE_MODEL` when derivable)
+  on `invocation.env` and restore after — no `process.env` mutation, no
+  cross-session races.
+- **Not via `ctx.tool.transform`.** The v2.0.15/bash tool input schema is
+  `{ command, workdir, timeout }` — there is no `env` input field to inject
+  through, and wrapping the executor to mutate `process.env` would be global
+  mutable server state with cross-session races. The transform API is the
+  wrong mechanism for this.
+- **dev (unreleased) — path removed.** The bash tool was rewritten: input is
+  `{ command, workdir, timeout }`, execution goes through
+  `ChildProcess.make(...)` with no env option and no hook trigger
+  (`packages/core/src/tool/bash.ts`). Upstream TODO: *"Add plugin shell.env
+  environment augmentation once V2 plugin hooks exist."* — i.e., the
+  `create.before` hook is a v2.0.15-era API dropped on dev pending a new
+  V2 plugin hooks design.
+
+Impact: a plugin would work only on v2.0.15 and break on the next release, so
+the skill ships the claim convention (wrapper/inline env) as the
+version-stable mechanism. Revisit when upstream lands the new V2 plugin hooks.
