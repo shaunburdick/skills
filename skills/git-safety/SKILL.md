@@ -224,7 +224,7 @@ Claude Code exports the model.
 At the start of every session where you may make git commits, perform these
 steps **once**. Do not repeat them on every commit.
 
-#### Step 1: Ensure Hook Exists
+#### Step 1: Ensure Hook Exists and Is Current
 
 First, resolve the hook directory. Git uses `core.hooksPath` when set (e.g.,
 Husky sets it to `.husky/_/`). When unset, it defaults to `.git/hooks/`.
@@ -239,11 +239,18 @@ HOOK_PATH="${HOOK_DIR}/prepare-commit-msg"
 > installed per-repo. If you clone the repo fresh, you'll need to run this
 > step again.
 
-Check if the hook exists at the resolved path:
+Verify the hook is installed **and current** — the bundled checker compares
+the installed hook's attribution block byte-for-byte against the shipped
+script (content hash, so any drift is caught):
 
 ```bash
-test -f "$HOOK_PATH" && echo "exists" || echo "missing"
+bash .agents/skills/git-safety/scripts/check-hook.sh
 ```
+
+Output: `CURRENT` (exit 0) when the installed block matches the shipped
+script; `OUTDATED` (exit 1) with exact remediation commands when the hook is
+missing, not executable, or its attribution block differs (e.g. after a
+skill update). The checker covers both install modes below.
 
 **Common hook managers and their paths:**
 
@@ -262,14 +269,10 @@ cp .agents/skills/git-safety/scripts/prepare-commit-msg "$HOOK_PATH"
 chmod +x "$HOOK_PATH"
 ```
 
-**If exists but missing attribution logic**, check for the marker:
-
-```bash
-grep -q "AI_AGENT\|OPENCODE_TERMINAL" "$HOOK_PATH" && echo "has attribution" || echo "needs update"
-```
-
-If it needs update, append the attribution block extracted from the shipped
-hook script — it is the single source of truth (no copy-paste divergence):
+**If `check-hook.sh` reports OUTDATED**, update the hook — it prints the
+exact commands. The update paths mirror the install modes below (the shipped
+script's attribution block is the single source of truth, no copy-paste
+divergence):
 
 ```bash
 sed -n '/^# --- AI Commit Attribution/,/^# --- end AI Commit Attribution/p' \
@@ -304,15 +307,16 @@ HOOK_PATH="${HOOK_DIR}/prepare-commit-msg"
 # Check hook exists and is executable
 ls -la "$HOOK_PATH"
 
-# Check hook contains attribution logic
-grep -q "AI_AGENT\|OPENCODE_TERMINAL" "$HOOK_PATH" && echo "hook has attribution" || echo "hook needs update"
+# Check hook exists and is current (attribution block hash matches shipped)
+bash .agents/skills/git-safety/scripts/check-hook.sh
 
 # Check claim vars are set (in agent session)
 echo "AI_AGENT=${AI_AGENT:-unset} OPENCODE_AGENT=${OPENCODE_AGENT:-unset} OPENCODE_MODEL=${OPENCODE_MODEL:-unset}"
 ```
 
-Run the skill's functional tests (covers AC-1..AC-17, incl. the A2
-cross-harness agent/model cases, from the feature spec):
+Run the skill's functional tests (covers AC-1..AC-19, incl. the A2
+cross-harness agent/model cases and the A3 currency-check smoke tests, from
+the feature spec):
 
 ```bash
 bash .agents/skills/git-safety/scripts/test-prepare-commit-msg.sh

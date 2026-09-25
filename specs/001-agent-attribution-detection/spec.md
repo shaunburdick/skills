@@ -235,3 +235,26 @@ no errors.
       `Generated-By: ai-agent` boolean fallback (AC-8d).
     - **AC-17**: `AI_AGENT=opencode OPENCODE_MODEL=my-model git commit` →
       `Generated-By: opencode (model: my-model)` (AC-8e).
+
+- **A3 (Sep 25 2026) — hook install-currency check (user-approved:
+  "Implement hash check")**: SKILL.md setup/verification previously checked
+  only existence, executability, and a marker grep (`AI_AGENT|OPENCODE_TERMINAL`)
+  — which *any* version since v1 satisfies, so a stale installed hook
+  reported "has attribution" after a skill update.
+  - **FR-011 — block-hash currency check**: new read-only
+    `scripts/check-hook.sh` compares the installed hook's extractable
+    "AI Commit Attribution" block against the shipped script's block using
+    `git hash-object` (content hash, so any byte drift is caught without
+    version-string discipline; valid for both full-copy and appended
+    installs). Also verifies existence, executability, and block syntax
+    (`bash -n` on the extracted block only). Prints exact remediation
+    commands; exit 0 = current, exit 1 = missing/not-executable/outdated.
+    SKILL.md Step 1 ("Ensure Hook Exists and Is Current") and the
+    Verification section invoke the checker; the marker-only grep is
+    removed.
+  - **AC-18**: `check-hook.sh` verdicts — full-copy install → CURRENT/0
+    (AC-18a); tampered block → OUTDATED/1 (AC-18b); missing hook →
+    OUTDATED/1 (AC-18c); block appended into a pre-existing hook →
+    CURRENT/0 (AC-18d). Covered by harness smoke tests.
+  - **AC-19**: SKILL.md no longer uses the marker-only grep for currency;
+    Step 1 and Verification run `check-hook.sh`.

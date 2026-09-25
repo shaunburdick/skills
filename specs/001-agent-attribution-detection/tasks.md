@@ -18,3 +18,7 @@ Follow-up wave (user: "3 and 2 go in this PR"):
 Second follow-up wave (user-approved: "Both wins in PR #9") — amendment A2:
 
 - [x] T-010: Cross-harness agent name + model attribution — FR-009/FR-010: `prepare-commit-msg` now resolves agent name from `AI_AGENT`/`AGENT` claim values (bool markers `1`/`true` and canonical `opencode` excluded; `OPENCODE_AGENT` scoped to the opencode harness) and model harness-scoped (`OPENCODE_MODEL` / `ANTHROPIC_MODEL`); trailer precedence `<agent> (model: <model>)` → `<agent>` → `<harness> (model: <model>)` → `<harness>`. Test harness extended 13 → 20 cases (AC-12..AC-17); docs updated (SKILL.md attribution section, `references/attribution-detection.md` new "Agent Name and Model Resolution" section, spec amendment A2).
+
+Third follow-up wave (user-approved: "Implement hash check") — amendment A3:
+
+- [x] T-011: Hook install-currency check — FR-011/AC-18/AC-19: new read-only `scripts/check-hook.sh` (block-hash comparison via `git hash-object`, existence/executable/block-syntax gates, exact remediation commands, exit 0 current / 1 outdated); SKILL.md Step 1 "Ensure Hook Exists and Is Current" + Verification run the checker (marker-only grep removed); test harness +4 smoke cases (AC-18a..d, 20 → 24 green); spec amendment A3.

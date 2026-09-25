@@ -20,6 +20,7 @@
 #   AC-8c AI_AGENT=custom-name         → Generated-By: custom-name
 #   AC-8d AI_AGENT=1 (boolean)         → Generated-By: ai-agent (fallback)
 #   AC-8e AI_AGENT=opencode + OPENCODE_MODEL → opencode (model: ...)
+# plus (amendment A3): AC-18a..d check-hook.sh install-currency smoke tests
 #
 # Requires: bash 3.2+, git, coreutils. No other dependencies.
 #
@@ -30,6 +31,7 @@ set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK="$HERE/prepare-commit-msg"
 WRAPPER="$HERE/git-agent-commit"
+CHECK="$HERE/check-hook.sh"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -147,6 +149,42 @@ fi
 # AC-9: git-agent-commit wrapper produces the same trailer as the inline form
 run_case "AC-9  wrapper parity" "Generated-By: my-agent (model: my-model)" 0 \
   OPENCODE_AGENT=my-agent OPENCODE_MODEL=my-model "$WRAPPER" --allow-empty -m "test: ac9"
+
+# AC-18a..d: check-hook.sh install-currency smoke tests (amendment A3)
+# a: full-copy install (as done above) is detected as current
+if "$CHECK" "$TMP/.git/hooks/prepare-commit-msg" >/dev/null 2>&1; then
+  report ok "AC-18a full-copy install current"
+else
+  report no "AC-18a full-copy install current" "check-hook.sh rejected a byte-copy install"
+fi
+
+# b: a tampered attribution block is flagged OUTDATED (exit 1)
+awk 'NR!=45' "$TMP/.git/hooks/prepare-commit-msg" > "$TMP/tampered-hook"
+chmod +x "$TMP/tampered-hook"
+tamper_out="$("$CHECK" "$TMP/tampered-hook" 2>&1)"
+tamper_rc=$?
+if [[ $tamper_rc -eq 1 ]] && grep -qi "outdated" <<<"$tamper_out"; then
+  report ok "AC-18b tampered block flagged"
+else
+  report no "AC-18b tampered block flagged" "expected exit 1 + OUTDATED, got exit $tamper_rc"
+fi
+
+# c: a missing hook is flagged (exit 1)
+if "$CHECK" "$TMP/does-not-exist" >/dev/null 2>&1; then
+  report no "AC-18c missing hook flagged" "check-hook.sh exited 0 for a missing hook"
+else
+  report ok "AC-18c missing hook flagged"
+fi
+
+# d: block appended into a pre-existing hook is detected as current
+printf '#!/bin/sh\n# pre-existing hook\nexit 0\n' > "$TMP/existing-hook"
+sed -n '/^# --- AI Commit Attribution/,/^# --- end AI Commit Attribution/p' "$HOOK" >> "$TMP/existing-hook"
+chmod +x "$TMP/existing-hook"
+if "$CHECK" "$TMP/existing-hook" >/dev/null 2>&1; then
+  report ok "AC-18d appended install current"
+else
+  report no "AC-18d appended install current" "check-hook.sh rejected an appended-block install"
+fi
 
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [[ "$fail" -eq 0 ]]

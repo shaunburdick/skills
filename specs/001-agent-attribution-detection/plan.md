@@ -103,6 +103,7 @@ exits nonzero on any failure. Uses only bash builtins + coreutils.
 | Default trailer | Harness name when unclaimed identity | Richer attribution than the old blanket `opencode` |
 | Agent name (A2) | Claim values as names; `OPENCODE_AGENT` scoped to opencode | agents.md#136 says the `AI_AGENT`/`AGENT` value IS the agent name; scoping kills stale-`OPENCODE_AGENT` misattribute |
 | Model (A2) | Harness-scoped: `OPENCODE_MODEL`, `ANTHROPIC_MODEL` only | Only vars confirmed exported to tool envs; a bare model var is never a marker (AC-14) |
+| Hook currency (A3) | Block-hash comparison (`check-hook.sh`) | Version strings only catch bumps you remember; a content hash catches any byte drift, and the expected hash is derived from the shipped block so it can't go stale (`git hash-object` = portable, zero deps) |
 | Bash floor | 3.2 (macOS default) | No associative arrays, no `${var,,}`, no `mapfile` |
 | Parity | Script + SKILL.md appendable block | Both carry the same logic; SKILL.md verification checks the block matches |
 | Versioning | git-safety 1.1.0→1.2.0, ai-attribution 1.0.0→1.1.0 | Semver across the skill docs |
