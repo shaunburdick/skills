@@ -25,9 +25,14 @@
 #     a stderr warning when present without a claim, so a silent miss is
 #     impossible and a human commit is never misattributed.
 #
-# Optional env vars for richer attribution:
-#   OPENCODE_AGENT  — agent name (e.g., "my-agent")
-#   OPENCODE_MODEL  — model ID (e.g., "my-model")
+# Agent name and model resolution (cross-harness):
+#   - Agent name: OPENCODE_AGENT (opencode only); otherwise the AI_AGENT /
+#     AGENT value itself is the agent name per the agents.md#136 standard,
+#     unless it is a boolean marker ("1"/"true") or the canonical claim
+#     value "opencode".
+#   - Model: OPENCODE_MODEL (opencode) or ANTHROPIC_MODEL (claude-code, when
+#     the harness exports it); other harnesses expose no model var today.
+#   - Fallback: the harness name. Attributed only when a harness is detected.
 #
 # The block between the "AI Commit Attribution" markers is self-contained;
 # existing hooks can extract and append it (see SKILL.md):
@@ -94,15 +99,50 @@ detect_harness() {
 
 harness="$(detect_harness)"
 
+# Resolve the agent name, harness-aware:
+#   - opencode harness: the OPENCODE_AGENT claim var is the sub-agent name.
+#   - otherwise: the AI_AGENT / AGENT value itself is the agent name per the
+#     emerging standard (agents.md#136) — except boolean markers ("1"/"true")
+#     and the canonical claim value "opencode", which mean "harness only".
+resolve_agent() {
+  if [[ "$harness" == "opencode" ]] && [[ -n "${OPENCODE_AGENT:-}" ]]; then
+    printf '%s\n' "${OPENCODE_AGENT}"
+    return
+  fi
+  local value=""
+  if [[ -n "${AI_AGENT:-}" ]]; then
+    value="${AI_AGENT}"
+  elif [[ -n "${AGENT:-}" ]]; then
+    value="${AGENT}"
+  fi
+  case "$value" in
+    ""|1|true|opencode) ;;          # marker / boolean / canonical → no override
+    *)                   printf '%s\n' "$value" ;;
+  esac
+}
+
+# Resolve the model, harness-scoped. Only vars confirmed present in the
+# harness's tool subprocess env are consulted; nothing is fabricated.
+resolve_model() {
+  case "$harness" in
+    opencode)    printf '%s\n' "${OPENCODE_MODEL:-}" ;;
+    claude-code) printf '%s\n' "${ANTHROPIC_MODEL:-}" ;;
+  esac
+}
+
 if [[ -n "$harness" ]]; then
   # Skip if trailer already exists (avoid duplicates on amend).
   if ! grep -q "^Generated-By:" "$commit_msg_file"; then
-    agent="${OPENCODE_AGENT:-}"
-    model="${OPENCODE_MODEL:-}"
+    agent="$(resolve_agent)"
+    model="$(resolve_model)"
     if [[ -n "$agent" ]] && [[ -n "$model" ]]; then
       attribution="${agent} (model: ${model})"
     elif [[ -n "$agent" ]]; then
       attribution="$agent"
+    elif [[ -n "$model" ]]; then
+      # Agent unknown but harness known: attribute the harness with its model
+      # (e.g. claude-code exporting ANTHROPIC_MODEL).
+      attribution="${harness} (model: ${model})"
     else
       attribution="$harness"
     fi

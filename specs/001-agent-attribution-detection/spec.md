@@ -146,6 +146,8 @@ no errors.
 | Amend of an AI commit | Existing trailer detected → no change. |
 | Amend of a human commit with claim env set | Trailer appended (claimed agent authored the amendment). |
 | `OPENCODE_AGENT` set but no detection var | `OPENCODE_AGENT` itself is a FR-001 detection signal → attributed as `opencode`. |
+| `OPENCODE_AGENT` set under a *non-opencode* harness (stale value) | Ignored — scoped to the opencode harness (FR-009, AC-15). |
+| `ANTHROPIC_MODEL` set in a plain human shell | Not a marker — no trailer (AC-14). |
 | Empty/absent commit message file argument | Hook guards with `${1:-}` and exits 0. |
 | Goose/Amp (`AGENT=goose`/`AGENT=amp`) | Non-`1` `AGENT` values match FR-001 → attributed. |
 | Bash 3.2 (macOS) | All scripts avoid bash 4+ syntax (FR-008). |
@@ -196,3 +198,40 @@ no errors.
     (rewritten bash tool, no hook trigger, upstream TODO pending new V2
     plugin hooks) — so no plugin ships; the claim convention remains the
     version-stable mechanism.
+
+- **A2 (Sep 25 2026) — cross-harness agent name + model attribution
+  (user-approved: "Both wins in PR #9")**: extend attribution beyond
+  `OPENCODE_AGENT`/`OPENCODE_MODEL` to the rest of the ecosystem:
+  - **FR-009 — agent name from claim values**: the `AI_AGENT`/`AGENT` value
+    itself is the agent name per agentsmd/agents.md#136 (the value has
+    name semantics: `goose`, `amp`, `custom-architect`, ...), unless it is
+    a boolean marker (`1`/`true`) or the canonical claim value `opencode`.
+    `OPENCODE_AGENT` applies only when the harness is `opencode`, so a
+    stale value from another harness's session is ignored. FR-003's
+    default-attribution clause is superseded by the A2 precedence rules.
+  - **FR-010 — harness-scoped model lookup**: only two model vars are
+    consulted — `OPENCODE_MODEL` (opencode) and `ANTHROPIC_MODEL`
+    (claude-code, emitted as-is with `[1m]`/provider prefixes preserved).
+    No other harness exports a model var to tool subprocesses today
+    (`OPENAI_MODEL`/`GEMINI_MODEL` are SDK config vars, not exports). A
+    model var alone never triggers attribution — a bare `ANTHROPIC_MODEL`
+    in a human shell is not a marker.
+  - Trailer precedence: `<agent> (model: <model>)` → `<agent>` →
+    `<harness> (model: <model>)` (agent unknown, model known) →
+    `<harness>`.
+  - New acceptance criteria (test-case labels in parentheses):
+    - **AC-12**: `AGENT=whatever git commit` → `Generated-By: whatever`
+      (AC-2c).
+    - **AC-13**: `CLAUDE_CODE=1 ANTHROPIC_MODEL=claude-opus-4-6 git commit`
+      → `Generated-By: claude-code (model: claude-opus-4-6)` (AC-3b);
+      identical via `CLAUDE_CODE_ENTRYPOINT` (AC-3c).
+    - **AC-14**: bare `ANTHROPIC_MODEL=... git commit` (no harness marker) →
+      no trailer (AC-5b).
+    - **AC-15**: `CLAUDE_CODE=1 OPENCODE_AGENT=stale git commit` →
+      `Generated-By: claude-code` — stale `OPENCODE_AGENT` scoped out
+      (AC-2d).
+    - **AC-16**: `AI_AGENT=custom-architect git commit` →
+      `Generated-By: custom-architect` (AC-8c); `AI_AGENT=1 git commit` →
+      `Generated-By: ai-agent` boolean fallback (AC-8d).
+    - **AC-17**: `AI_AGENT=opencode OPENCODE_MODEL=my-model git commit` →
+      `Generated-By: opencode (model: my-model)` (AC-8e).

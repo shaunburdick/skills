@@ -12,8 +12,8 @@ non-empty value (not just `1`):
 
 | Harness | Detection env var(s) | Notes |
 |---|---|---|
-| Standard (emerging) | `AI_AGENT` | `CI=true`-style convention (agentsmd/agents.md#136); `opencode` yields `Generated-By: opencode`, other values yield `ai-agent` |
-| Legacy `AGENT` | `AGENT` | Any non-empty value matches |
+| Standard (emerging) | `AI_AGENT` | `CI=true`-style convention (agentsmd/agents.md#136); `opencode` is the canonical claim; other non-boolean values are the **agent name** (see Agent Name and Model Resolution) |
+| Legacy `AGENT` | `AGENT` | Any non-empty value matches; non-boolean values become the agent name |
 | Goose / Amp | `AGENT=goose` / `AGENT=amp` | Adopted the `AGENT` convention with non-`1` values |
 | Claude Code | `CLAUDE_CODE`, `CLAUDE_CODE_ENTRYPOINT` | Set in subprocesses spawned by Claude Code |
 | Cursor | `CURSOR_AGENT` | |
@@ -62,7 +62,7 @@ AI_AGENT=opencode OPENCODE_AGENT="my-agent" OPENCODE_MODEL="my-model" \
 
 Trailer defaults: no `OPENCODE_AGENT` → harness name (`opencode` for the
 canonical claim); `OPENCODE_AGENT` only → the agent name; both set →
-`<agent> (model: <model>)`.
+`<agent> (model: <model>)`. Full cross-harness resolution: next section.
 
 ### Unclaimed OpenCode sessions
 
@@ -73,11 +73,46 @@ OpenCode TUI terminal see the warning too — that is deliberate: it is the
 price of making agent silent-failure impossible, and no trailer is ever
 falsely added.
 
+## Agent Name and Model Resolution
+
+Beyond harness detection, the hook resolves an **agent name** and a **model**
+for the trailer (amendment A2, FR-009/FR-010).
+
+Agent name precedence (first match wins):
+
+1. `OPENCODE_AGENT` — only when the harness is `opencode`; a stale value left
+   over from another harness's session is ignored.
+2. The `AI_AGENT` / `AGENT` **value itself** — per agents.md#136 the value is
+   the agent name (`goose`, `amp`, `custom-architect`, ...). Exceptions:
+   boolean markers (`1`, `true`) and the canonical claim value `opencode`,
+   which mean "harness only".
+3. Fallback: the harness name.
+
+Model resolution is harness-scoped; nothing is fabricated:
+
+| Harness | Model var | Evidence |
+|---|---|---|
+| `opencode` | `OPENCODE_MODEL` | claim var set by the wrapper or inline |
+| `claude-code` | `ANTHROPIC_MODEL` | confirmed present in Claude Code's bash-tool env (claude-code#27754 showed `ANTHROPIC_MODEL=global.anthropic.claude-opus-4-6-v1`); emitted as-is — `[1m]` extension suffixes and `global.` / `us.` provider prefixes are preserved |
+| all others | none | no model var confirmed exported to tool subprocesses; `OPENAI_MODEL` / `GEMINI_MODEL` are SDK config vars, not harness exports |
+
+A model var alone **never** triggers attribution — detection requires a
+harness marker first — so a human whose shell happens to export
+`ANTHROPIC_MODEL` is never attributed (AC-5b).
+
+Trailer forms, in precedence order:
+
+- `<agent> (model: <model>)` — both known
+- `<harness> (model: <model>)` — agent unknown, model known (e.g.
+  claude-code exporting `ANTHROPIC_MODEL`)
+- `<agent>` — agent known, no model
+- `<harness>` — neither known
+
 ## Mixed Environments (AI + Human Commits)
 
 | Scenario | Detection | Hook behavior |
 |---|---|---|
-| Agent on a harness with a marker (Claude Code, Cursor, Goose, Amp, ...) | harness env var | appends `Generated-By: <harness>` |
+| Agent on a harness with a marker (Claude Code, Cursor, Goose, Amp, ...) | harness env var | appends trailer; agent name from claim value (harness fallback), model when the harness exports one |
 | Agent on OpenCode v2, claimed | `AI_AGENT` via `git-agent-commit` | appends default or rich attribution |
 | Agent on OpenCode v2, forgot to claim | `OPENCODE_TERMINAL` only | stderr warning; **no** trailer |
 | Human terminal (outside OpenCode) | no vars | exits silently, no trailer |

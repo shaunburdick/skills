@@ -163,24 +163,24 @@ visible silence:
    a human in the TUI terminal) is never misattributed; the hook prints a
    stderr warning instead of failing silently.
 
-**Optional env vars for richer attribution** (set on the commit command line —
-see "OpenCode v2" below for why session-start exports don't work):
+**Richer attribution** is resolved cross-harness (details:
+[references/attribution-detection.md](references/attribution-detection.md)):
 
-```bash
-OPENCODE_AGENT="<your-agent-name>" OPENCODE_MODEL="<your-model-id>" \
-  git-agent-commit -m "..."
-```
-
-If not set, the hook defaults the trailer to the harness name (e.g.
-`Generated-By: opencode`).
+- **Agent name** — `OPENCODE_AGENT` (opencode) or the `AI_AGENT`/`AGENT`
+  value itself (per agents.md#136 the value is the agent name: `goose`,
+  `amp`, `custom-architect`, ...). Boolean markers (`1`/`true`) and the
+  canonical `opencode` value fall back to the harness name.
+- **Model** — `OPENCODE_MODEL` (opencode) or `ANTHROPIC_MODEL`
+  (claude-code, when Claude Code exports it). Other harnesses expose no
+  model var today, and a model var alone never triggers attribution.
 
 ### Detection (Signal Matrix)
 
 The hook treats the session as AI when **any** of these env vars is set to a
 non-empty value (not just `1`):
 
-`AI_AGENT`, `AGENT` (any value — `goose`/`amp` produce harness names),
-`OPENCODE`, `OPENCODE_CLIENT`, `CLAUDE_CODE`, `CLAUDE_CODE_ENTRYPOINT`,
+`AI_AGENT`, `AGENT` (any value — `goose`/`amp` and other names become the
+agent name), `OPENCODE`, `OPENCODE_CLIENT`, `CLAUDE_CODE`, `CLAUDE_CODE_ENTRYPOINT`,
 `CURSOR_AGENT`, `GEMINI_CLI`, `CODEX_SANDBOX`, `AUGMENT_AGENT`,
 `CLINE_ACTIVE`, `OPENCODE_AGENT`, `OPENCODE_MODEL`.
 
@@ -213,8 +213,11 @@ cp .agents/skills/git-safety/scripts/git-agent-commit ~/.local/bin/
 chmod +x ~/.local/bin/git-agent-commit
 ```
 
-Trailer defaults: no `OPENCODE_AGENT` → harness name (e.g. `opencode`);
-`OPENCODE_AGENT` only → agent name; both → `<agent> (model: <model>)`.
+Trailer defaults: no agent name → harness name (e.g. `opencode`); agent name
+only → agent name; model only → `<harness> (model: <model>)`; both →
+`<agent> (model: <model>)`. For other harnesses, `CLAUDE_CODE=1
+ANTHROPIC_MODEL=...` yields `Generated-By: claude-code (model: ...)` when
+Claude Code exports the model.
 
 ### Session Setup
 
@@ -308,7 +311,8 @@ grep -q "AI_AGENT\|OPENCODE_TERMINAL" "$HOOK_PATH" && echo "hook has attribution
 echo "AI_AGENT=${AI_AGENT:-unset} OPENCODE_AGENT=${OPENCODE_AGENT:-unset} OPENCODE_MODEL=${OPENCODE_MODEL:-unset}"
 ```
 
-Run the skill's functional tests (covers AC-1..AC-9 from the feature spec):
+Run the skill's functional tests (covers AC-1..AC-17, incl. the A2
+cross-harness agent/model cases, from the feature spec):
 
 ```bash
 bash .agents/skills/git-safety/scripts/test-prepare-commit-msg.sh

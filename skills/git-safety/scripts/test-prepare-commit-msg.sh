@@ -2,7 +2,8 @@
 # test-prepare-commit-msg.sh — functional tests for scripts/prepare-commit-msg.
 #
 # Covers acceptance criteria AC-1..AC-9 from
-# specs/001-agent-attribution-detection/spec.md:
+# specs/001-agent-attribution-detection/spec.md plus the cross-harness
+# agent-name/model extension (FR-009/FR-010, amendment A2):
 #   AC-1  AI_AGENT=opencode            → Generated-By: opencode
 #   AC-2  AGENT=goose                  → Generated-By: goose
 #   AC-3  CLAUDE_CODE=1                → Generated-By: claude-code
@@ -12,6 +13,13 @@
 #   AC-7  merge/squash commit source   → hook skips regardless of env
 #   AC-8  AI_AGENT + OPENCODE_AGENT/MODEL → rich attribution
 #   AC-9  git-agent-commit wrapper     → byte-identical trailer
+# plus (amendment A2):
+#   AC-2c AGENT=whatever               → Generated-By: whatever
+#   AC-3b CLAUDE_CODE=1 + ANTHROPIC_MODEL → claude-code (model: ...)
+#   AC-5b ANTHROPIC_MODEL alone        → no trailer (model var is not a marker)
+#   AC-8c AI_AGENT=custom-name         → Generated-By: custom-name
+#   AC-8d AI_AGENT=1 (boolean)         → Generated-By: ai-agent (fallback)
+#   AC-8e AI_AGENT=opencode + OPENCODE_MODEL → opencode (model: ...)
 #
 # Requires: bash 3.2+, git, coreutils. No other dependencies.
 #
@@ -45,7 +53,7 @@ UNSET=(
   -u AI_AGENT -u AGENT -u OPENCODE -u OPENCODE_TERMINAL -u OPENCODE_AGENT
   -u OPENCODE_MODEL -u OPENCODE_CLIENT -u CLAUDE_CODE
   -u CLAUDE_CODE_ENTRYPOINT -u CURSOR_AGENT -u GEMINI_CLI -u CODEX_SANDBOX
-  -u AUGMENT_AGENT -u CLINE_ACTIVE
+  -u AUGMENT_AGENT -u CLINE_ACTIVE -u ANTHROPIC_MODEL
 )
 
 cd "$TMP" || exit 1
@@ -91,13 +99,25 @@ run_case() { # run_case <name> <expected-trailer|-> <expect-warn|0|1> <env...> g
 run_case "AC-1  AI_AGENT=opencode"      "Generated-By: opencode"           0 AI_AGENT=opencode git commit --allow-empty -m "test: ac1"
 run_case "AC-2  AGENT=goose"            "Generated-By: goose"              0 AGENT=goose git commit --allow-empty -m "test: ac2"
 run_case "AC-2b AGENT=amp"              "Generated-By: amp"                0 AGENT=amp git commit --allow-empty -m "test: ac2b"
-run_case "AC-2c AGENT=other"            "Generated-By: agent"              0 AGENT=whatever git commit --allow-empty -m "test: ac2c"
+run_case "AC-2c AGENT=other"            "Generated-By: whatever"           0 AGENT=whatever git commit --allow-empty -m "test: ac2c"
 run_case "AC-3  CLAUDE_CODE=1"          "Generated-By: claude-code"        0 CLAUDE_CODE=1 git commit --allow-empty -m "test: ac3"
 run_case "AC-4  OPENCODE_TERMINAL only" "-"                                1 OPENCODE_TERMINAL=1 git commit --allow-empty -m "test: ac4"
 run_case "AC-5  plain commit"           "-"                                0 git commit --allow-empty -m "test: ac5"
 run_case "AC-8  rich attribution"       "Generated-By: my-agent (model: my-model)" 0 \
   AI_AGENT=opencode OPENCODE_AGENT=my-agent OPENCODE_MODEL=my-model git commit --allow-empty -m "test: ac8"
 run_case "AC-8b OPENCODE_AGENT alone"   "Generated-By: my-agent"           0 OPENCODE_AGENT=my-agent git commit --allow-empty -m "test: ac8b"
+
+# Amendment A2 — cross-harness agent name + model attribution (FR-009/FR-010)
+run_case "AC-3b claude-code + model"    "Generated-By: claude-code (model: claude-opus-4-6)" 0 \
+  CLAUDE_CODE=1 ANTHROPIC_MODEL=claude-opus-4-6 git commit --allow-empty -m "test: ac3b"
+run_case "AC-3c claude entrypoint+model" "Generated-By: claude-code (model: claude-sonnet-4-6)" 0 \
+  CLAUDE_CODE_ENTRYPOINT=cli ANTHROPIC_MODEL=claude-sonnet-4-6 git commit --allow-empty -m "test: ac3c"
+run_case "AC-5b bare ANTHROPIC_MODEL"   "-"                                0 ANTHROPIC_MODEL=claude-opus-4-6 git commit --allow-empty -m "test: ac5b"
+run_case "AC-2d stale OPENCODE_AGENT"   "Generated-By: claude-code"        0 CLAUDE_CODE=1 OPENCODE_AGENT=stale git commit --allow-empty -m "test: ac2d"
+run_case "AC-8c AI_AGENT=custom name"   "Generated-By: custom-architect"   0 AI_AGENT=custom-architect git commit --allow-empty -m "test: ac8c"
+run_case "AC-8d AI_AGENT=1 boolean"     "Generated-By: ai-agent"           0 AI_AGENT=1 git commit --allow-empty -m "test: ac8d"
+run_case "AC-8e model without agent"    "Generated-By: opencode (model: my-model)" 0 \
+  AI_AGENT=opencode OPENCODE_MODEL=my-model git commit --allow-empty -m "test: ac8e"
 
 # AC-6: existing trailer must not be duplicated
 run_case "AC-6  dedupe existing trailer" "Generated-By: existing-agent"    0 AI_AGENT=opencode git commit --allow-empty -m "test: ac6
