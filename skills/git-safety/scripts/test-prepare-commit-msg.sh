@@ -29,6 +29,8 @@
 # Hybrid installs:
 #   AC-18e..f stale attribution code outside the block flagged;
 #             comment-only mentions not flagged
+# Message-file edge cases:
+#   AC-19  no trailing newline before the trailer → git still parses it
 #
 # Requires: bash 3.2+, git, coreutils. No other dependencies.
 #
@@ -83,7 +85,11 @@ run_case() { # run_case <name> <expected-trailer|-> <expect-warn|0|1> <env...> g
   local out trailer warned=0 status problems=""
   out="$(env "${UNSET[@]}" "$@" 2>&1)"
   status=$?
-  trailer="$(git log -1 --format=%B | grep -m1 '^Generated-By:' || true)"
+  # Assert structurally: git's own trailer parser must accept the trailer.
+  # A plain message grep would pass even when the trailer shares a paragraph
+  # with the body, which git does not treat as a trailer at all.
+  trailer="$(git log -1 --format=%B | git interpret-trailers --parse \
+    | grep -m1 '^Generated-By:' || true)"
   grep -q "without an AI attribution claim" <<<"$out" && warned=1
 
   [[ "$status" -eq 0 ]] || problems="commit exited $status; "
@@ -157,6 +163,25 @@ fi
 # AC-9: git-agent-commit wrapper produces the same trailer as the inline form
 run_case "AC-9  wrapper parity" "Generated-By: my-agent (model: my-model)" 0 \
   OPENCODE_AGENT=my-agent OPENCODE_MODEL=my-model "$WRAPPER" --allow-empty -m "test: ac9"
+
+# AC-19: message file with no trailing newline. Without the hook's guard the
+# appended trailer lands in the body's paragraph and git rejects it outright,
+# so assert with git's parser rather than a message grep (which would pass).
+msg_no_nl="$TMP/.git/msg-no-newline"
+printf 'fix: message with no trailing newline' > "$msg_no_nl"
+hook_status=0
+env "${UNSET[@]}" AI_AGENT=opencode "$HOOK" "$msg_no_nl" message >/dev/null 2>&1 \
+  || hook_status=$?
+parsed="$(git interpret-trailers --parse "$msg_no_nl" 2>/dev/null \
+  | grep -m1 '^Generated-By:' || true)"
+if [[ "$hook_status" -ne 0 ]]; then
+  report no "AC-19 no trailing newline" "hook exited $hook_status"
+elif [[ "$parsed" == "Generated-By: opencode" ]]; then
+  report ok "AC-19 no trailing newline"
+else
+  report no "AC-19 no trailing newline" \
+    "git parsed '${parsed:-<nothing>}' — trailer is invisible to git"
+fi
 
 # AC-18a..f: check-hook.sh install-currency smoke tests
 # a: full-copy install (as done above) is detected as current

@@ -322,7 +322,7 @@ echo "AI_AGENT=${AI_AGENT:-unset} OPENCODE_AGENT=${OPENCODE_AGENT:-unset} OPENCO
 
 Run the skill's functional tests (detection matrix, cross-harness
 agent/model attribution, hook install-currency smoke tests, and
-hybrid-install detection — 26 cases):
+hybrid-install detection — 27 cases):
 
 ```bash
 bash .agents/skills/git-safety/scripts/test-prepare-commit-msg.sh
