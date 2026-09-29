@@ -123,13 +123,14 @@ Trailer forms, in precedence order:
 Find all AI-generated commits:
 
 ```bash
-git log --trailer=Generated-By --oneline
+git log --grep='^Generated-By:' --oneline
 ```
 
-Extract unique agents/models:
+Extract unique agents/models (the `sed` drops the blank values produced by
+commits that carry no trailer, which would otherwise dominate the count):
 
 ```bash
-git log --format='%(trailers:valueonly,separator=%x2C,unfold,separator=%x2Ckey=Generated-By)' | sort | uniq -c | sort -rn
+git log --format='%(trailers:key=Generated-By,valueonly)' | sed '/^$/d' | sort | uniq -c | sort -rn
 ```
 
 ## Ecosystem Status

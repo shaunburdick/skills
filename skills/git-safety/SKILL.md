@@ -353,7 +353,7 @@ Find AI-generated commits and unique agents/models — commands in
 The essentials:
 
 ```bash
-git log --trailer=Generated-By --oneline
+git log --grep='^Generated-By:' --oneline
 ```
 
 ## References
