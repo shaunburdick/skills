@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 # test-prepare-commit-msg.sh — functional tests for scripts/prepare-commit-msg.
 #
-# Covers acceptance criteria AC-1..AC-9 from
-# specs/001-agent-attribution-detection/spec.md plus the cross-harness
-# agent-name/model extension (FR-009/FR-010, amendment A2):
+# Covers acceptance criteria AC-1..AC-9 plus the cross-harness
+# agent-name/model extension (FR-009/FR-010, amendment A2).
+#
+# AC definitions: specs/001-agent-attribution-detection/spec.md (repo only —
+#   a development artifact not shipped with the skill, so it is absent from
+#   installed/vendored copies of this script; never cite it alone).
+# Signal matrix + expected outputs: ../references/attribution-detection.md
+#   (ships with the skill).
+#
+# AC list:
 #   AC-1  AI_AGENT=opencode            → Generated-By: opencode
 #   AC-2  AGENT=goose                  → Generated-By: goose
 #   AC-3  CLAUDE_CODE=1                → Generated-By: claude-code

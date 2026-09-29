@@ -94,21 +94,25 @@ Examples:
 
 ## PR and Commit Preflights
 
-Run the seven preflight gates before any commit, push, sync, or PR creation.
-Each is a binary continue/stop check; a stopped check blocks the operation
-until resolved or escalated. **MUST READ**:
+Run the preflight gates that apply to the operation you are about to
+perform. Each is a binary continue/stop check; a stopped check blocks the
+operation until resolved or escalated. **MUST READ**:
 [references/preflight-checks.md](references/preflight-checks.md) — read it
-before the first git mutation of a session.
+before the first git mutation of a session; it carries the
+operation → checks table (a first commit on a fresh branch runs 1 and 2
+only).
 
-Quick reference:
+Quick reference — scope in brackets:
 
-1. `git status --porcelain` — clean, or staged changes only
-2. `git branch --show-current` — not `main`/`master`/`develop`
+1. `git status --porcelain` — clean, or staged changes only `[all]`
+2. `git branch --show-current` — not `main`/`master`/`develop` `[all]`
 3. `git rev-parse --verify HEAD` + `git ls-remote --heads origin <branch>`
+   `[push/sync/PR]`
 4. `git rev-list --left-right --count HEAD...@{upstream}` — never behind
-5. `git merge-base --is-ancestor main HEAD` — ≥ 1 commit past base
-6. Unpublished branch → no `gh pr create` until user-approved push
-7. No commits past base → no `gh pr create`
+   `[push/sync/PR]`
+5. `git merge-base --is-ancestor main HEAD` — ≥ 1 commit past base `[PR]`
+6. Unpublished branch → no `gh pr create` until user-approved push `[PR]`
+7. No commits past base → no `gh pr create` `[PR]`
 
 Stopped preflights are recorded in the Preflight Result Format (see the
 reference) and preserved in handoffs for traceability.
@@ -355,7 +359,7 @@ git log --trailer=Generated-By --oneline
 ## References
 
 - **[references/attribution-detection.md](references/attribution-detection.md)**: Full detection matrix, OpenCode v2 environment reality, and parsing commands.
-- **[references/preflight-checks.md](references/preflight-checks.md)**: The seven preflight gates — MUST read before the first git mutation of a session.
+- **[references/preflight-checks.md](references/preflight-checks.md)**: The operation-scoped preflight gates — MUST read before the first git mutation of a session.
 - **[references/permission-denied-reporting.md](references/permission-denied-reporting.md)**: Denial reporting, escalation, and the Secret and Encrypted-File Boundary.
 
 ## Related Skills
