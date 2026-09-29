@@ -242,8 +242,8 @@ surfaces beyond commits rather than loading both sections into context.
 To find all AI-generated content across surfaces:
 
 ```bash
-# Git commits — messages carrying a Generated-By trailer
-git log --grep='^Generated-By:' --oneline
+# Git commits — hash, attribution, subject (attributed commits only)
+git log --format='%h%x09%(trailers:key=Generated-By,valueonly,separator=)%x09%s' | awk -F'\t' '$2 != ""'
 
 # PRs with attribution (requires gh CLI)
 gh pr list --json body --jq '.[] | select(.body | contains("Generated-By"))'

@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
 # test-prepare-commit-msg.sh — functional tests for scripts/prepare-commit-msg.
 #
-# Covers acceptance criteria AC-1..AC-9 plus the cross-harness
-# agent-name/model extension (FR-009/FR-010, amendment A2).
+# Self-contained: each case states its input and expected output, so nothing
+# needs looking up elsewhere — a shipped skill never has a spec document to
+# point at. The signal matrix behind these cases is in
+# ../references/attribution-detection.md, which does ship with the skill.
+# AC-n labels are stable IDs for reading test output, not citations.
 #
-# AC definitions: specs/001-agent-attribution-detection/spec.md (repo only —
-#   a development artifact not shipped with the skill, so it is absent from
-#   installed/vendored copies of this script; never cite it alone).
-# Signal matrix + expected outputs: ../references/attribution-detection.md
-#   (ships with the skill).
-#
-# AC list:
+# Detection + attribution matrix:
 #   AC-1  AI_AGENT=opencode            → Generated-By: opencode
 #   AC-2  AGENT=goose                  → Generated-By: goose
 #   AC-3  CLAUDE_CODE=1                → Generated-By: claude-code
@@ -20,16 +17,18 @@
 #   AC-7  merge/squash commit source   → hook skips regardless of env
 #   AC-8  AI_AGENT + OPENCODE_AGENT/MODEL → rich attribution
 #   AC-9  git-agent-commit wrapper     → byte-identical trailer
-# plus (amendment A2):
+# Cross-harness agent name + model:
 #   AC-2c AGENT=whatever               → Generated-By: whatever
 #   AC-3b CLAUDE_CODE=1 + ANTHROPIC_MODEL → claude-code (model: ...)
 #   AC-5b ANTHROPIC_MODEL alone        → no trailer (model var is not a marker)
 #   AC-8c AI_AGENT=custom-name         → Generated-By: custom-name
 #   AC-8d AI_AGENT=1 (boolean)         → Generated-By: ai-agent (fallback)
 #   AC-8e AI_AGENT=opencode + OPENCODE_MODEL → opencode (model: ...)
-# plus (amendment A3): AC-18a..d check-hook.sh install-currency smoke tests
-# plus (amendment A4): AC-18e..f hybrid-install detection (stale attribution
-#     code outside the block flagged; comment-only mentions not flagged)
+# Hook install currency (check-hook.sh):
+#   AC-18a..d install-currency smoke tests
+# Hybrid installs:
+#   AC-18e..f stale attribution code outside the block flagged;
+#             comment-only mentions not flagged
 #
 # Requires: bash 3.2+, git, coreutils. No other dependencies.
 #
@@ -118,7 +117,7 @@ run_case "AC-8  rich attribution"       "Generated-By: my-agent (model: my-model
   AI_AGENT=opencode OPENCODE_AGENT=my-agent OPENCODE_MODEL=my-model git commit --allow-empty -m "test: ac8"
 run_case "AC-8b OPENCODE_AGENT alone"   "Generated-By: my-agent"           0 OPENCODE_AGENT=my-agent git commit --allow-empty -m "test: ac8b"
 
-# Amendment A2 — cross-harness agent name + model attribution (FR-009/FR-010)
+# Cross-harness agent name + model attribution:
 run_case "AC-3b claude-code + model"    "Generated-By: claude-code (model: claude-opus-4-6)" 0 \
   CLAUDE_CODE=1 ANTHROPIC_MODEL=claude-opus-4-6 git commit --allow-empty -m "test: ac3b"
 run_case "AC-3c claude entrypoint+model" "Generated-By: claude-code (model: claude-sonnet-4-6)" 0 \
@@ -159,7 +158,7 @@ fi
 run_case "AC-9  wrapper parity" "Generated-By: my-agent (model: my-model)" 0 \
   OPENCODE_AGENT=my-agent OPENCODE_MODEL=my-model "$WRAPPER" --allow-empty -m "test: ac9"
 
-# AC-18a..f: check-hook.sh install-currency smoke tests (amendments A3/A4)
+# AC-18a..f: check-hook.sh install-currency smoke tests
 # a: full-copy install (as done above) is detected as current
 if "$CHECK" "$TMP/.git/hooks/prepare-commit-msg" >/dev/null 2>&1; then
   report ok "AC-18a full-copy install current"

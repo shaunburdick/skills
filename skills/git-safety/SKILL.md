@@ -320,9 +320,9 @@ bash .agents/skills/git-safety/scripts/check-hook.sh
 echo "AI_AGENT=${AI_AGENT:-unset} OPENCODE_AGENT=${OPENCODE_AGENT:-unset} OPENCODE_MODEL=${OPENCODE_MODEL:-unset}"
 ```
 
-Run the skill's functional tests (covers AC-1..AC-19, incl. the A2
-cross-harness agent/model cases, the A3 currency-check smoke tests, and the
-A4 hybrid-install detection cases, from the feature spec):
+Run the skill's functional tests (detection matrix, cross-harness
+agent/model attribution, hook install-currency smoke tests, and
+hybrid-install detection — 26 cases):
 
 ```bash
 bash .agents/skills/git-safety/scripts/test-prepare-commit-msg.sh
@@ -348,12 +348,14 @@ need to manually remove the attribution block between the
 
 ### Parsing Attribution
 
-Find AI-generated commits and unique agents/models — commands in
+Find AI-generated commits and unique agents/models — full commands, and why
+they are shaped that way, in
 [references/attribution-detection.md](references/attribution-detection.md).
-The essentials:
+The essentials (git's trailer parser, not a message grep):
 
 ```bash
-git log --grep='^Generated-By:' --oneline
+# hash <TAB> attribution <TAB> subject — attributed commits only
+git log --format='%h%x09%(trailers:key=Generated-By,valueonly,separator=)%x09%s' | awk -F'\t' '$2 != ""'
 ```
 
 ## References
