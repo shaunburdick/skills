@@ -1,0 +1,21 @@
+{
+  "_note": "Starting points, not laws. Derived from one reported incident plus a calibration pass against a vitest/typescript monorepo, NOT from a survey of healthy projects. Calibrate against your own history before trusting them: run for a few weeks, read the trend, then set the limits where your project actually sits. Every edit here shows up as a diff, which is the point. Delete any key to disable that check.",
+
+  "commentRatio": { "max": 0.35 },
+  "_commentRatio": "Comments over ~35% of product source. The reported incident was 0.4901 and a real project measured 0.4644 - both read as symptomatically heavy. Where the line sits is a judgement call.",
+
+  "docProseToCode": { "max": 1.0 },
+  "_docProseToCode": "Documentation prose exceeding the code it describes. At 1.0 every code line carries a doc line.",
+
+  "agentContextLines": { "max": 5000 },
+  "_agentContextLines": "Repo-local instruction only - AGENTS.md, repo-local skills, repo-local agent definitions. Global skills and the user's harness agents are reported separately and never ratcheted, because a repo cannot gate what it does not own. Measured 4,302 on a repo carrying 14 local skills.",
+
+  "assertsPerTestCase": { "min": 1.0 },
+  "_assertsPerTestCase": "Deliberately low. A vitest suite commonly writes one expect() per case and measured 1.9 on a healthy monorepo - a floor of 5 false-alarmed on it. This exists to catch tests that assert nothing at all, not to encode a style preference.",
+
+  "linesPerTestCase": { "max": 200 },
+  "_linesPerTestCase": "Very high suggests large fixtures or setup rather than many assertions. Reported as a flat signal; ambiguous in sign.",
+
+  "productCommentLines": { "min": 0 },
+  "_productCommentLines": "Floor only. The band in the ratchet is what actually constrains this; see SKILL.md on why a one-directional rule is satisfied by deletion."
+}

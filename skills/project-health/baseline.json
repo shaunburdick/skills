@@ -1,0 +1,17 @@
+{
+  "_note": "Baseline for the ratchet. Raising a value is allowed and shows up as a visible diff; that visibility is the mechanism. Do not lower productCommentLines or testCases to make a ratio look better.",
+  "agentContextFiles": 11,
+  "agentContextLines": 3188,
+  "allDocProseLines": 2242,
+  "commentRatio": 0.2678,
+  "docProseToCode": 3.07,
+  "files": 3,
+  "globalAgentContextLines": 8620,
+  "productCodeLines": 730,
+  "productCommentLines": 267,
+  "scatteredDocShare": 0.81,
+  "specProseLines": 426,
+  "testAsserts": 0,
+  "testCases": 0,
+  "testLines": 0
+}
