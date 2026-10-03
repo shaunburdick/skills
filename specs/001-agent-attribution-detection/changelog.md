@@ -27,17 +27,22 @@ failed the acceptance criteria in the same file.
 This entry is the restructure that fixes it, not a behaviour change.
 
 **Changed**:
-- FR-003 rewritten to match AC-16 (see v1.2 — the fix is that entry's fix, now
-  applied to the body instead of narrated around it)
+- FR-003 rewritten to match the claim-value rule. The old AC-16 (now AC-006)
+  already asserted it; the fix is that entry's fix, now applied to the body
+  instead of narrated around it
 - Requirements regrouped by concern and renumbered. Pre-v1.5 mapping:
   old FR-003 → new FR-003/FR-005; old FR-009 → new FR-003; old FR-010 → new
   FR-004; old FR-011 → new FR-010; old FR-012 → new FR-011. Others unchanged.
 - Acceptance criteria folded in from the amendment log and renumbered
-  `AC-001`–`AC-025`. The old log cited sub-labels (`AC-8c`, `AC-8d`, `AC-8e`)
-  that no acceptance criterion defined; those cases are now explicit criteria.
+  `AC-001`–`AC-026`. The old log cited sub-labels (`AC-8c`, `AC-8d`, `AC-8e`)
+  that no acceptance criterion defined; those cases are now explicit criteria,
+  and AC-026 covers FR-008, which previously had none
 - `## Clarifications Applied` and `## Amendments` removed from `spec.md`; the
   reasoning they held is here
 - `## Out of Scope` reduced to names, pointing here for reasoning
+
+Old AC ids above refer to the pre-v1.5 numbering; the mapping is the inverse of
+the FR mapping.
 
 ---
 
