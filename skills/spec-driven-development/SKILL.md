@@ -1,10 +1,10 @@
 ---
 name: spec-driven-development
-description: Structured spec-driven development workflow. Load this skill whenever starting a new feature, building a system from scratch, requirements are unclear, or a user asks to "plan", "spec out", "design", or "architect" something — even if they don't use the word "spec". Guides the agent through six phases, constitution → specification → clarification → plan → tasks → implement. Never skip phases. Always review existing specs before creating new ones — amend existing specs when work falls within their domain.
+description: Structured spec-driven development workflow. Load this skill whenever starting a new feature, building a system from scratch, requirements are unclear, or a user asks to "plan", "spec out", "design", or "architect" something — even if they don't use the word "spec". A size gate routes the change first — a Small change (no decisions to agree, nothing outside the repo broken, reversible in one revert) gets a two-paragraph note and no artifacts; anything else runs the six phases — constitution → specification → clarification → plan → tasks → implement. Always review existing specs before creating new ones, and amend them by editing the requirement in place rather than appending.
 license: MIT
 metadata:
   author: shaunburdick
-  version: "2.2.0"
+  version: "2.3.0"
 ---
 
 # Spec-Driven Development

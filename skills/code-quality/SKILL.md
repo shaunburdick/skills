@@ -4,7 +4,7 @@ description: "Enforces non-negotiable code quality standards for AI coding agent
 license: MIT
 metadata:
   author: shaunburdick
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Code Quality Standards
