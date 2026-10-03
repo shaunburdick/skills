@@ -63,7 +63,26 @@ project/
 | 5   | Tasks         | Architect | `specs/###-name/tasks.md`                  | User approves                        |
 | 6   | Implement     | Architect | Working, tested code                       | All acceptance criteria met          |
 
-**Never skip a phase.** Each gate exists to catch misunderstandings when they're cheap to fix.
+**Size gate — check this first.**
+
+| Change touches | Lane | Artifacts |
+|---|---|---|
+| <3 files, <200 lines, no new dependency, no wire-format or authz change | **Small** | Two-paragraph note in the PR body (or the commit body when there is no PR). No spec, no plan, no tasks, no gates. |
+| Anything above | **Full** | Phases 1–6. |
+
+A one-line behaviour change in a module with an existing test is a Small
+change. "Never skip a phase" applies to the Full lane. Over-specifying a small
+change costs more than it prevents: the process artifacts get re-read by every
+later session, and a wrong premise baked into a spec survives longer than a
+wrong line of code.
+
+The Small lane skips artifacts, not judgement. Two rules apply in **both**
+lanes because each costs one command and each prevents a rewrite:
+
+- **Premise check** — verify claims about third-party behaviour before building
+  on them (see [Premise check](#premise-check-mandatory-for-any-external-api)).
+- **Triage** — if the change belongs to an existing spec, amend it; do not
+  create a parallel one (see [Phase 2](#triage-existing-specs-first)).
 
 ---
 
@@ -141,6 +160,24 @@ Before handing off to planning, eliminate every ambiguity.
 
 ## Phase 4: Plan
 
+### Premise check (mandatory for any external API)
+
+Before planning on a claim about a third party's behaviour ("GitHub does not
+record X"), fetch the endpoint and read it. One `curl` or one doc lookup.
+Record the response shape in `research.md`.
+
+If a premise cannot be verified, do not specify on it. An unverified premise
+encodes a guess into the spec, and every FR derived from it multiplies the cost
+of the guess.
+
+Read the response shape, not just the field list. A real example: GitHub's
+issue-event object does carry `actor` ("the person who generated the event"),
+so a design that assumed issue history could not be attributed was wrong — but
+`commented` events do *not* use that common shape and carry `user` instead. An
+implementation reading `event.actor.login` would work on most events and return
+null on every comment. One API read surfaces both halves; a memory-only
+assumption surfaces neither.
+
 Create a feature branch and run the planning setup:
 
 ```bash
@@ -201,7 +238,6 @@ For all code quality rules, lint suppression policy, type safety requirements, a
 
 Key reminders:
 - ✅ TDD preferred — write tests before or alongside implementation
-- ✅ Every public function/method must have a doc comment
 - ✅ Check off tasks in `tasks.md` as you complete them
 - ❌ No lint suppressions of any kind — fix the code instead
 
