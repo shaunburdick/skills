@@ -66,16 +66,57 @@ project/
 
 **Size gate — check this first.**
 
-| Change touches | Lane | Artifacts |
+| Lane | Condition | Artifacts |
 |---|---|---|
-| <3 files, <200 lines, no new dependency, no wire-format or authz change | **Small** | Two-paragraph note in the PR body (or the commit body when there is no PR). No spec, no plan, no tasks, no gates. |
-| Anything above | **Full** | Phases 1–6. |
+| **Small** | All three checks below pass | Two-paragraph note in the PR body (or the commit body when there is no PR). No spec, no plan, no tasks, no gates. |
+| **Full** | Any one check fails | Phases 1–6. |
 
-A one-line behaviour change in a module with an existing test is a Small
-change. "Never skip a phase" applies to the Full lane. Over-specifying a small
-change costs more than it prevents: the process artifacts get re-read by every
-later session, and a wrong premise baked into a spec survives longer than a
-wrong line of code.
+The gate asks one question: **are there decisions here that must be agreed before
+someone writes code?** That is what the Full lane exists to do, so a change with
+no decisions to resolve gains nothing from it.
+
+**All three must pass for Small:**
+
+1. **You can write the acceptance criteria without asking anyone anything.** If
+   you cannot, there is something to agree on. This is Phase 3's entire job — if
+   nothing needs clarifying, the phase has nothing to do.
+2. **Nothing breaks that no local test can catch.** Wire format, public API,
+   persisted schema, event payload, authz boundary — anything consumed outside
+   this repo. **Additive is not breaking**: a new optional field is Small;
+   changing or removing an existing one is Full.
+3. **One `git revert` undoes it.** No data migration, no external coordination,
+   no published artifact to recall. A wrong guess should cost one commit.
+
+**Worked examples:**
+
+| Change | 1 · ACs unaided | 2 · Breaks a consumed contract | 3 · One revert | Lane |
+|---|---|---|---|---|
+| Add a display name to an existing field | yes | no — additive | yes | **Small** |
+| Typo fix in a doc | yes | no | yes | **Small** |
+| Add an optional field to a public response | yes | no — additive | yes | **Small** |
+| Change what an existing field means | yes | yes | yes | **Full** |
+| New feature reaching 40% of the work | no — open questions | yes | no | **Full** |
+
+Answer check 1 by trying: draft the criteria. It takes seconds and cannot be
+argued with, which is the point — a change with ten open questions does not pass
+by asserting it has none.
+
+**Scale is not the gate.** A 40-file mechanical refactor with no open questions
+and no contract change is Small: its spec would contain no information, and what
+it actually needs is better tests. Conversely a 5-line change that breaks a
+consumed API is Full. If the checks pass but the diff is enormous, that is a
+large *diff*, not a complex *change*. File and line counts make a reasonable
+"this is probably not Small" nag; they are not the gate.
+
+"Never skip a phase" applies to the Full lane. Over-specifying a small change
+costs more than it prevents: the process artifacts get re-read by every later
+session, and a wrong premise baked into a spec survives longer than a wrong line
+of code.
+
+**Escalate mid-flight.** Small is a claim about now, not a licence for the rest
+of the task. If implementation surfaces a decision you were not authorised to
+make — an undefined case, an ambiguous requirement, a third-party behaviour you
+had assumed — stop and escalate to Full rather than quietly picking a default.
 
 The Small lane skips artifacts, not judgement. Two rules apply in **both**
 lanes because each costs one command and each prevents a rewrite:
