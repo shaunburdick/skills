@@ -133,11 +133,14 @@ without `--baseline` would overwrite it with the wrong numbers.
 
 ## Thresholds
 
-`thresholds.json` ships starting points derived from one reported incident and one
-calibration pass against a real monorepo — not from a survey of healthy projects. **Calibrate against your own history before
-trusting them** — run for a few weeks, read the trend, then set limits where
-your project actually sits. Delete any key to disable that check. Every edit is
-a diff, which is the same mechanism as the ratchet.
+`thresholds.json` ships advisory limits. Each rule carries a `why` stating what the
+number means and what crossing it signals — deliberately **not** the project it
+was seeded from, which ages badly and lives in git history instead.
+
+Seeded values are starting points, not laws. **Calibrate against your own history
+before trusting them** — run for a few weeks, read the direction of travel, then
+set the limits where your project actually sits. Delete any rule to silence it.
+Every edit is a diff, which is the same mechanism as the ratchet.
 
 ## Accuracy limits
 
