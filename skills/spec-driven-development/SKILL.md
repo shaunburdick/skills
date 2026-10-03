@@ -40,6 +40,7 @@ project/
 └── specs/                           # One directory per feature, at the repo root
     ├── 001-feature-name/
     │   ├── spec.md                  # Feature specification (/speckit.specify)
+    │   ├── changelog.md             # Why requirements changed — opt-in, kept out of spec.md
     │   ├── plan.md                  # Created during planning phase
     │   ├── research.md
     │   ├── data-model.md
@@ -113,11 +114,20 @@ Before creating any new spec, **scan all existing specs** to determine whether t
 1. Run `ls specs/` to list all existing spec directories.
 2. For each spec, read the title, problem statement, and functional requirements (first ~30 lines of `spec.md`).
 3. Ask: "Does this work modify, extend, or fix something described in an existing spec?"
-4. **If yes** → amend the existing spec (bump version, add FRs, update ACs, add change log entry). Skip to the "Key sections" section below to update the spec in place.
+4. **If yes** → amend the existing spec. **Amend means edit:** rewrite the
+   changed requirements in place so the body describes only the current
+   intended behaviour, update the matching ACs, and add one entry to
+   `changelog.md`. Never append a new FR and leave the old one standing with a
+   "superseded by" note — a reader of `## Functional Requirements` must get
+   correct behaviour from that section alone.
 5. **If no** → create a new spec as described below.
 6. **If ambiguous** → ask the user before proceeding.
 
 **Common mistake to avoid:** "Improve combat" is not a new feature — it's an amendment to the combat spec. "Add inventory system" is a new feature. When in doubt, check.
+
+The other failure is over-correcting into sprawl: a spec that has accreted a
+hundred lines of amendments has stopped being readable, and the fix is to
+**rewrite it**, not to split it. See "When to Stop Amending" in the triage guide.
 
 ### Create the Spec
 
@@ -130,7 +140,7 @@ Key sections:
 - **Functional Requirements** — `FR-001`, `FR-002`, … (WHAT, not HOW)
 - **Non-Functional Requirements** — performance, security, compatibility
 - **Acceptance Criteria** — specific, measurable, binary pass/fail
-- **Out of Scope** — explicitly named exclusions
+- **Out of Scope** — explicitly named exclusions, pointing at `changelog.md` for the reasoning
 - **Edge Cases** — documented with expected behavior
 
 **What makes a requirement "executable":**
@@ -139,6 +149,12 @@ Key sections:
 - Measurable: "≥80% test coverage" not "good test coverage"
 - Explicit error handling: document 404, 500, timeout, empty state behavior
 - Example inputs/outputs for all user-facing elements
+
+**What does not belong in `spec.md`:** provenance, rejected alternatives, and
+implementation mechanics. Those go to `changelog.md` (requirement-level why)
+and `research.md` / the commit body (what and how). A spec that records its own
+history stops being readable as a statement of current behaviour — and the
+requirement it is read for is usually in the part that gets skipped.
 
 ---
 
@@ -151,8 +167,10 @@ Before handing off to planning, eliminate every ambiguity.
 1. Ask 3–5 targeted questions at a time (not a wall of 20)
 2. For each question, explain _why_ the answer matters
 3. Give an example of what a complete answer looks like
-4. Document every answer as a new concrete requirement (`FR-007a`, `FR-007b`, etc.)
-5. Update the spec version (`v1.0` → `v1.1`) and add a "Clarifications Applied" section
+4. Document every answer as a requirement in the body — an existing FR edited
+   to the clarified behaviour, or a new one added alongside it
+5. Bump the spec version and record the question, answer, and resulting
+   requirement change in `changelog.md` — not in `spec.md`
 
 **Exit criteria:** Zero `[NEEDS CLARIFICATION]` markers remain. Every question has been answered and documented as a requirement. A developer could implement from this spec without asking further questions.
 
