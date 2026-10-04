@@ -135,6 +135,50 @@ ones. Watch for:
 Trajectory matters more than any single reading. One snapshot cannot tell you
 whether a ratio is healthy for your project; a series can.
 
+## Repo-authored ignores
+
+For files that are neither generated output nor recognisable source — scraped
+data fixtures, vendored snapshots, archived material:
+
+```json
+// <repo>/.project-health/config.json
+{
+  "ignorePaths": ["europa-source/**", "**/*.generated.ts", "fixtures"]
+}
+```
+
+Committed, so ignores are reviewable in a diff like any other decision.
+
+Not `.gitignore`: that expresses "untracked", whereas the problem is generated
+files that are committed and therefore tracked, so `.gitignore` structurally
+cannot express it.
+
+Two rules, chosen so the surprising case is the explicit one:
+
+- A pattern containing a slash is **anchored to the repo root**. `src/*` means
+  src's direct children, not its subtree.
+- A pattern with no slash matches at **any depth**, gitignore-style. `*.snap`
+  matches at the root and nested.
+- A pattern with **no metacharacter** also matches everything under it, so naming
+  a directory is enough: `fixtures` covers `fixtures/a.json`. A pattern that does
+  contain a metacharacter matches only what it spells out — `**/snapshots`
+  matches the directory entry, and you want `**/snapshots/**` for its contents.
+  Silently descending for globs would make `src/*` swallow whole subtrees.
+
+**Ignores are counted, not hidden.** `files ignored by repo config` and
+`lines ignored by repo config` appear in the composition block, and the applied
+patterns are printed by name.
+
+That reporting exists because **ignoring is how a repository improves its own
+numbers without fixing anything.** Ignoring the docs directory drops
+`docProseToCode` and looks like progress. Most such moves trip the ratchet anyway —
+removing prose fails the `allDocProseLines` band, removing tests fails
+`testCases` — but **if a ratio improved unexpectedly, check this block first.** An
+`ignoredLines` that grew by more than the ratchet tolerance is the explanation.
+
+A malformed `config.json` applies **nothing** and says so, rather than falling
+back to an empty pattern list and producing a flattering clean run.
+
 ## Ratchet semantics
 
 `--check` compares against `baseline.json`. Three directions, and the first is
@@ -172,7 +216,8 @@ predates its test suite fails every check, because `testLines` would have a band
 of exactly `(0, 0)` around zero. Run `--update` to make it a real limit.
 
 `--baseline PATH` overrides the location for repos that keep their ratchet state
-somewhere other than `.project-health/`.
+somewhere other than `.project-health/`. `--config PATH` does the same for
+`ignorePaths`.
 
 ## Thresholds
 
@@ -205,9 +250,11 @@ Read these before quoting a number as fact:
   …). Without that, a dotfiles or infrastructure repo reports almost no product
   code, because those files have no suffix. `.gitignore` and friends are
   excluded as repository metadata.
-- **Data files are neither product nor generated.** A 300MB scraped fixture with
-  no recognised extension counts toward nothing. If a repo wants that visible,
-  the fix is a new category rather than letting it inflate a denominator.
+- **Data files are neither product nor generated.** A scraped fixture with no
+  recognised extension counts toward nothing by default, which is the safe
+  default: inflating a denominator is worse than being invisible. Repos that
+  carry large data fixtures should declare them in `ignorePaths` so the exclusion
+  is reported rather than implicit.
 - **`describe(` is a suite, not a case.** Counting it inflated one monorepo's
   test-case count by 21%. Cases require a quoted first argument, which also keeps
   ordinary calls named `test` or `it` from matching.

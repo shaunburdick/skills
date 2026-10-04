@@ -27,6 +27,12 @@
 #   AC-12 unchanged repo                 → exit 0
 #   AC-13 comment deletion               → exit 1 (band, both directions)
 #   AC-14 zero baseline, metric appeared → exit 0, status "new", not FAIL
+#
+# Repo-authored ignore config:
+#   AC-15 ignorePaths exclude files, counted not hidden
+#   AC-16 a slashless glob does not swallow nested paths
+#   AC-17 malformed config applies nothing and says so
+#   AC-18 non-list ignorePaths is rejected rather than ignored
 
 set -uo pipefail
 
@@ -201,6 +207,46 @@ printf 'def test_x():\n    assert True\n' > "$r/test_x.py"
 check_status "AC-14 testCases reports new" "$r" testCases new
 python3 "$TOOL" --repo "$r" --check >/dev/null 2>&1
 [ $? -eq 0 ] && ok "AC-14 adoption does not fail the gate" || bad "AC-14 adoption does not fail the gate" "exit 0" "exit $?"
+
+echo "AC-15 repo config ignorePaths exclude matching files, counted not hidden"
+r="$(fixture ac15)"; mkdir -p "$r/.project-health" "$r/data/raw" "$r/src"
+printf 'const a = 1;\n// note\n' > "$r/src/main.ts"
+for i in 1 2 3; do printf 'raw data %s\nsecond line\n' "$i" > "$r/data/raw/f$i.bin"; done
+printf '{"ignorePaths": ["data/**"]}\n' > "$r/.project-health/config.json"
+check_metric "AC-15 ignored files counted"  "$r" ignoredFiles 3
+check_metric "AC-15 ignored lines counted"  "$r" ignoredLines 6
+check_metric "AC-15 ignored data is not product" "$r" productCodeLines 1
+out="$(python3 "$TOOL" --repo "$r" 2>/dev/null)"
+printf '%s' "$out" | grep -q 'data/\*\*' \
+  && ok "AC-15 the applied pattern is named in the output" \
+  || bad "AC-15 the applied pattern is named in the output" "data/** named" "not present"
+
+echo "AC-16 a slashless glob does not swallow nested paths"
+r="$(fixture ac16)"; mkdir -p "$r/src/nested" "$r/.project-health"
+printf 'const a = 1;\n' > "$r/src/a.ts"
+printf 'const b = 2;\n' > "$r/src/nested/b.ts"
+printf '{"ignorePaths": ["src/*"]}\n' > "$r/.project-health/config.json"
+check_metric "AC-16 direct child ignored, nested kept" "$r" productCodeLines 1
+check_metric "AC-16 one file ignored" "$r" ignoredFiles 1
+
+echo "AC-17 a malformed config applies nothing and says so"
+r="$(fixture ac17)"; mkdir -p "$r/.project-health"
+printf 'const a = 1;\n' > "$r/main.ts"
+printf '{"ignorePaths": [ this is not json\n' > "$r/.project-health/config.json"
+out="$(python3 "$TOOL" --repo "$r" 2>/dev/null)"
+printf '%s' "$out" | grep -qi 'not valid JSON' \
+  && ok "AC-17 malformed config is reported loudly" \
+  || bad "AC-17 malformed config is reported loudly" "warning present" "silent"
+check_metric "AC-17 nothing ignored despite bad config" "$r" ignoredFiles 0
+
+echo "AC-18 a non-list ignorePaths is rejected rather than ignored"
+r="$(fixture ac18)"; mkdir -p "$r/.project-health"
+printf 'const a = 1;\n' > "$r/main.ts"
+printf '{"ignorePaths": "data/**"}\n' > "$r/.project-health/config.json"
+out="$(python3 "$TOOL" --repo "$r" 2>/dev/null)"
+printf '%s' "$out" | grep -qi 'non-list ignorePaths' \
+  && ok "AC-18 non-list ignorePaths is reported" \
+  || bad "AC-18 non-list ignorePaths is reported" "warning present" "silent"
 
 echo
 echo "passed $PASS, failed $FAIL"

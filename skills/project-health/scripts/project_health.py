@@ -383,15 +383,31 @@ def agent_context_files(start):
     return found
 
 
-def measure(start):
+def measure(start, config=None):
+    config = config if config is not None else DEFAULT_CONFIG
     metrics, notes = {}, []
 
     product_code = product_comment = product_files = 0
     test_lines = test_cases = test_asserts = 0
     all_doc_prose = doc_dir_prose = 0
     generated_files = generated_lines = 0
+    ignored_files = ignored_lines = 0
+    ignored_patterns_used = set()
+    compiled_ignores = compile_ignore_patterns(config.get("ignorePaths"))
 
     for path in source_files(start):
+        # Authored ignores are evaluated first and counted. Ignoring is how a
+        # repository improves its own numbers without fixing anything, so the
+        # excluded volume is reported rather than quietly dropped.
+        matched = is_ignored(path, start, compiled_ignores)
+        if matched:
+            ignored_patterns_used.add(matched)
+            ignored_files += 1
+            try:
+                ignored_lines += len(read(path).splitlines())
+            except OSError:
+                pass
+            continue
         basename = os.path.basename(path)
         suffix = os.path.splitext(path)[1].lower()
         # Extensionless product source (.zshrc, Makefile, Dockerfile) resolves
@@ -442,6 +458,8 @@ def measure(start):
     metrics["allDocProseLines"] = all_doc_prose
     metrics["generatedFiles"] = generated_files
     metrics["generatedLines"] = generated_lines
+    metrics["ignoredFiles"] = ignored_files
+    metrics["ignoredLines"] = ignored_lines
 
     context_local = context_global = 0
     local_files = []
@@ -486,7 +504,7 @@ def measure(start):
         notes.append("no test cases recognised - test-file discovery is by path and "
                      "name convention; a project that names tests differently will "
                      "under-report here.")
-    return metrics, notes, local_files
+    return metrics, notes, local_files, sorted(ignored_patterns_used)
 
 
 # One metric per line, grouped. A two-column table is denser, but it forces
@@ -500,6 +518,8 @@ GROUPS = (
         ("files", "product source files"),
         ("generatedFiles", "generated files excluded"),
         ("generatedLines", "generated lines excluded"),
+        ("ignoredFiles", "files ignored by repo config"),
+        ("ignoredLines", "lines ignored by repo config"),
     )),
     ("tests", (
         ("testLines", "test lines"),
@@ -588,12 +608,116 @@ def side_file(name):
 # up as a visible diff". An uncommitted baseline has no diff, so `--check` would
 # compare current against current and always pass.
 BASELINE_RELPATH = os.path.join(".project-health", "baseline.json")
+CONFIG_RELPATH = os.path.join(".project-health", "config.json")
 
 
 def baseline_path(start, override=None):
     if override:
         return os.path.abspath(override)
     return os.path.join(start, BASELINE_RELPATH)
+
+# Repo-authored ignore patterns, for files that are neither generated output nor
+# recognisable source: scraped data fixtures, vendored snapshots, archived
+# material. Deliberately NOT .gitignore -- that expresses "untracked", whereas
+# the problem here is generated files that are committed and therefore tracked,
+# so .gitignore structurally cannot express it.
+#
+# Patterns are gitignore-flavoured rather than shell globs: `*` and `?` stay
+# within one path segment, `**` crosses directories, and a pattern with no slash
+# matches at any depth.
+DEFAULT_CONFIG = {"ignorePaths": []}
+
+
+def glob_to_regex(pattern):
+    """Translate a gitignore-flavoured pattern to a regex.
+
+    `fnmatch` is not usable here: its `*` crosses `/`, so `src/*` would match
+    `src/a/b/c.ts`. Subtle path-matching bugs are exactly the failure mode this
+    tool cannot afford -- a pattern that matches too much silently deletes real
+    files from the measurement.
+    """
+    out, i, n = [], 0, len(pattern)
+    while i < n:
+        char = pattern[i]
+        if char == "*":
+            if i + 1 < n and pattern[i + 1] == "*":
+                i += 2
+                if i < n and pattern[i] == "/":
+                    i += 1
+                    out.append("(?:.*/)?")
+                else:
+                    out.append(".*")
+                continue
+            out.append("[^/]*")
+        elif char == "?":
+            out.append("[^/]")
+        else:
+            out.append(re.escape(char))
+        i += 1
+    return "".join(out)
+
+
+def compile_ignore_patterns(patterns):
+    """Compile patterns once.
+
+    Two rules, chosen so the surprising case is the explicit one:
+
+    - A pattern containing a slash is anchored to the repository root.
+      `src/*` means src's direct children, not its subtree.
+    - A pattern containing no slash matches at any depth, gitignore-style.
+    - A pattern with no glob metacharacter also matches everything *under* it,
+      so naming a directory is enough: `fixtures` covers `fixtures/a.json`.
+      A pattern that does contain a metacharacter matches only what it spells
+      out -- `**/snapshots` matches the directory entry, and you want
+      `**/snapshots/**` for its contents. Silently descending for globs would
+      make `src/*` swallow whole subtrees, which is the kind of over-broad
+      match that silently deletes real files from the measurement.
+    """
+    compiled = []
+    for pattern in patterns or []:
+        if not isinstance(pattern, str) or not pattern.strip():
+            continue
+        pattern = pattern.strip()
+        body = glob_to_regex(pattern)
+        has_meta = any(ch in pattern for ch in "*?[")
+        prefix = "" if "/" in pattern else "(?:.*/)?"
+        suffix = "" if has_meta else "(?:/.*)?"
+        compiled.append((pattern, re.compile("^" + prefix + body + suffix + "$")))
+    return compiled
+
+
+def is_ignored(path, start, compiled):
+    if not compiled:
+        return None
+    relative = os.path.relpath(path, start).replace(os.sep, "/")
+    for original, regex in compiled:
+        if regex.match(relative):
+            return original
+    return None
+
+
+def load_config(start, override=None):
+    """Read authored config. A malformed file must never silently ignore nothing,
+    because that would flatter every ratio while looking like a clean run."""
+    path = os.path.abspath(override) if override else os.path.join(start, CONFIG_RELPATH)
+    if not os.path.isfile(path):
+        return DEFAULT_CONFIG, None
+    try:
+        data = json.loads(read(path))
+    except ValueError as error:
+        return DEFAULT_CONFIG, "config at %s is not valid JSON (%s); NO ignore patterns were applied" % (path, error)
+    if not isinstance(data, dict):
+        return DEFAULT_CONFIG, "config at %s is not a JSON object; NO ignore patterns were applied" % path
+    patterns = data.get("ignorePaths", [])
+    if not isinstance(patterns, list):
+        return DEFAULT_CONFIG, "config at %s has a non-list ignorePaths; NO ignore patterns were applied" % path
+    return {"ignorePaths": patterns}, None
+
+
+def config_path(start, override=None):
+    if override:
+        return os.path.abspath(override)
+    return os.path.join(start, CONFIG_RELPATH)
 
 
 def load_json(path):
@@ -667,8 +791,14 @@ def check(metrics, baseline):
     return results, violations
 
 
-def render(metrics, notes, context_files, thresholds=None, results=None):
+def render(metrics, notes, context_files, thresholds=None, results=None,
+           patterns_used=()):
     out = [render_stat_block(metrics), ""]
+
+    if patterns_used:
+        out.append("Ignored by repo config: %s" % ", ".join(patterns_used))
+        out.append("  These files count toward nothing. If a ratio improved, this is why.")
+        out.append("")
 
     if thresholds is not None:
         warnings = evaluate_thresholds(metrics, thresholds)
@@ -762,6 +892,9 @@ def main():
                              "become another's baseline.")
     parser.add_argument("--thresholds", default=None,
                         help="thresholds file (default: the shipped one)")
+    parser.add_argument("--config", default=None,
+                        help="authored config with ignorePaths "
+                             "(default: <repo>/.project-health/config.json)")
     parser.add_argument("--explain", action="store_true", help="print metric definitions")
     args = parser.parse_args()
 
@@ -774,7 +907,10 @@ def main():
         print("not a directory: %s" % start, file=sys.stderr)
         return 2
 
-    metrics, notes, context_files = measure(start)
+    config, config_error = load_config(start, args.config)
+    metrics, notes, context_files, patterns_used = measure(start, config)
+    if config_error:
+        notes.insert(0, config_error)
     thresholds = load_json(args.thresholds or side_file("thresholds.json"))
 
     if args.update:
@@ -811,12 +947,13 @@ def main():
 
     if args.json:
         payload = {"repo": start, "metrics": metrics, "notes": notes,
+                   "ignorePatternsApplied": patterns_used,
                    "warnings": evaluate_thresholds(metrics, thresholds)}
         if results is not None:
             payload["ratchet"] = {"results": results, "violations": violations}
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
-        print(render(metrics, notes, context_files, thresholds, results))
+        print(render(metrics, notes, context_files, thresholds, results, patterns_used))
 
     if args.check and violations:
         print("\n%d ratchet violation(s)." % len(violations), file=sys.stderr)
