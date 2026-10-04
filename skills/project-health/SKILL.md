@@ -4,7 +4,7 @@ description: "Quantify repository composition and documentation drag — comment
 license: MIT
 metadata:
   author: shaunburdick
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Project Health
