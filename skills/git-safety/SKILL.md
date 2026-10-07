@@ -4,7 +4,7 @@ description: Enforces safe git practices for AI coding agents. Defines branch pr
 license: MIT
 metadata:
   author: shaunburdick
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # Git Safety
