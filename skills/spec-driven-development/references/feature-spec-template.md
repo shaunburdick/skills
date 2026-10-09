@@ -2,6 +2,13 @@
 
 Copy this template to `specs/###-feature-name/spec.md`. Replace all `<placeholder>` values. Never leave `[NEEDS CLARIFICATION]` markers when handing off to planning.
 
+> **This spec is a live document.** It describes the application's entire
+> intended feature set at this moment: reading `## Functional Requirements`
+> alone must produce correct behaviour — no superseded entries, no
+> contradictions, nothing the code no longer does. History lives in the
+> companion `changelog.md`; behavioural detail lives in ACs and Edge Cases,
+> not in the FR list.
+
 ---
 
 ```markdown
@@ -26,6 +33,12 @@ Copy this template to `specs/###-feature-name/spec.md`. Replace all `<placeholde
 - **FR-001**: <Specific, testable requirement — WHAT, not HOW>
 - **FR-002**: <Specific, testable requirement>
 - **FR-003**: <Specific, testable requirement>
+
+**Granularity**: one FR = one capability a single implementation task could
+deliver. Field-level behaviour, error messages, and edge cases are ACs and
+Edge Cases, not FRs. Keep the list to one screen — past ~15 FRs the spec is
+enumerating behaviour instead of capability; consolidate or split before
+adding.
 
 ## Non-Functional Requirements
 
@@ -83,8 +96,8 @@ explains why it came to require that.
 **Why**: <requirement-level decision — chosen approach, and the alternative it
 was chosen over>
 
-**Changed**: FR-008 (added); FR-003 (rewritten — <what changed and what it
-replaced>)
+**Changed**: +1 / ~1 / −0 FRs — FR-008 (rewritten — <what changed and what it
+replaced>); FR-003 (deleted — <what replaced it>)
 ```
 
 **Record**: requirement-level rationale, superseded approaches worth
