@@ -50,7 +50,7 @@ adding.
 
 ## Acceptance Criteria
 
-- [ ] **AC-001**: <Verifiable, binary — either it passes or it doesn't>
+- [ ] **AC-001**: <Behaviour the operator can observe, falsifiable by a change in behaviour — not inventory: no counts of controls, no closed-string sets asserted by equality, no "byte-for-byte unchanged" lists (a diff review covers those). Note what verifying it will cost: if it needs N files touched, the criterion is too structural>
 - [ ] **AC-002**: <Verifiable, binary criterion>
 - [ ] **AC-003**: <Verifiable, binary criterion>
 

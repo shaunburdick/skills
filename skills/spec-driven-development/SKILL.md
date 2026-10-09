@@ -4,7 +4,7 @@ description: Structured spec-driven development workflow. Load this skill whenev
 license: MIT
 metadata:
   author: shaunburdick
-  version: "2.5.0"
+  version: "2.6.0"
 ---
 
 # Spec-Driven Development
@@ -184,7 +184,7 @@ Key sections:
 - **User Stories** — `As a <role>, I want <action> so that <benefit>`
 - **Functional Requirements** — `FR-001`, `FR-002`, … (WHAT, not HOW)
 - **Non-Functional Requirements** — performance, security, compatibility
-- **Acceptance Criteria** — specific, measurable, binary pass/fail
+- **Acceptance Criteria** — specific, measurable, binary pass/fail — observable behaviour, not inventory of controls or closed string sets
 - **Out of Scope** — explicitly named exclusions, pointing at `changelog.md` for the reasoning
 - **Edge Cases** — documented with expected behavior
 
