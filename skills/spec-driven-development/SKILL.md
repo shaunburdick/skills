@@ -4,7 +4,7 @@ description: Structured spec-driven development workflow. Load this skill whenev
 license: MIT
 metadata:
   author: shaunburdick
-  version: "2.7.0"
+  version: "2.8.0"
 ---
 
 # Spec-Driven Development
@@ -15,19 +15,9 @@ The most common failure mode of AI-assisted coding is jumping straight to implem
 
 ## Tooling: spec-kit
 
-This workflow is powered by the [spec-kit CLI](https://github.com/github/spec-kit). For installation, initialization, slash commands, and project state detection, load the **`spec-kit` skill**.
-
-Quick reference for the impatient — initialize a project with `uvx` (no install required):
-
-```bash
-# New project
-uvx --from git+https://github.com/github/spec-kit.git specify init <project-name> --integration opencode
-
-# Existing project
-uvx --from git+https://github.com/github/spec-kit.git specify init . --here --integration opencode
-```
-
-Supported `--integration` values include `opencode`, `claude`, `copilot`, `cursor-agent`, `codex`, `gemini`, and many others — run `specify integration list` from an initialized project for the full catalog.
+The [spec-kit CLI](https://github.com/github/spec-kit) scaffolds and drives
+this workflow; the **`spec-kit` skill** covers installation, the slash
+commands, and state detection.
 
 ## Directory Structure
 
@@ -86,26 +76,8 @@ no decisions to resolve gains nothing from it.
 3. **One `git revert` undoes it.** No data migration, no external coordination,
    no published artifact to recall. A wrong guess should cost one commit.
 
-**Worked examples:**
-
-| Change | 1 · ACs unaided | 2 · Breaks a consumed contract | 3 · One revert | Lane |
-|---|---|---|---|---|
-| Add a display name to an existing field | yes | no — additive | yes | **Small** |
-| Typo fix in a doc | yes | no | yes | **Small** |
-| Add an optional field to a public response | yes | no — additive | yes | **Small** |
-| Change what an existing field means | yes | yes | yes | **Full** |
-| New feature reaching 40% of the work | no — open questions | yes | no | **Full** |
-
-Answer check 1 by trying: draft the criteria. It takes seconds and cannot be
-argued with, which is the point — a change with ten open questions does not pass
-by asserting it has none.
-
-**Scale is not the gate.** A 40-file mechanical refactor with no open questions
-and no contract change is Small: its spec would contain no information, and what
-it actually needs is better tests. Conversely a 5-line change that breaks a
-consumed API is Full. If the checks pass but the diff is enormous, that is a
-large *diff*, not a complex *change*. File and line counts make a reasonable
-"this is probably not Small" nag; they are not the gate.
+Worked examples, and why scale is not the gate:
+[references/size-gate-examples.md](references/size-gate-examples.md).
 
 "Never skip a phase" applies to the Full lane. Over-specifying a small change
 costs more than it prevents: the process artifacts get re-read by every later
@@ -152,29 +124,17 @@ The constitution must be approved before writing any feature specs. All subseque
 
 Before creating any new spec, **scan all existing specs** to determine whether this work belongs to an existing spec. See [references/spec-triage-guide.md](references/spec-triage-guide.md) for the full decision matrix and examples.
 
-**Process:**
-
-1. Run `ls specs/` to list all existing spec directories.
-2. For each spec, read the title, problem statement, and functional requirements (first ~30 lines of `spec.md`).
-3. Ask: "Does this work modify, extend, or fix something described in an existing spec?"
-4. **If yes** → amend the existing spec. **Amend means edit:** rewrite the
-   changed requirements in place so the body describes only the current
-   intended behaviour, update the matching ACs, and add one entry to
-   `changelog.md`. Never append a new FR and leave the old one standing with a
-   "superseded by" note — a reader of `## Functional Requirements` must get
-   correct behaviour from that section alone. **Trim before you add:** each
-   new FR must name the FR(s) it replaces, generalizes, or merges with, and a
-   change that would net-add more than ~3 FRs — or lands on a spec already
-   past ~15 FRs — goes through the Amendment Gate in the triage guide, not
-   append.
-5. **If no** → create a new spec as described below.
-6. **If ambiguous** → ask the user before proceeding.
-
-**Common mistake to avoid:** "Improve combat" is not a new feature — it's an amendment to the combat spec. "Add inventory system" is a new feature. When in doubt, check.
-
-The other failure is over-correcting into sprawl: a spec that has accreted a
-hundred lines of amendments has stopped being readable, and the fix is to
-**rewrite it**, not to split it. See "Amendment Gate" in the triage guide.
+**Process:** list `specs/`, read each spec's title, problem statement and
+first FRs, and ask whether this work modifies, extends, or fixes something
+already described. If yes, **amend by editing**: rewrite the changed
+requirements in place so the body describes only current behaviour, update the
+matching ACs, and add one `changelog.md` entry; never leave a superseded FR
+standing with a "superseded by" note. Each new FR names what it replaces, and
+a change that would net-add more than ~3 FRs, or lands on a spec past ~15,
+goes through the Amendment Gate in the triage guide. If no, create a new
+spec. If ambiguous, ask. "Improve combat" is an amendment; "add inventory
+system" is new. A spec that has accreted a hundred lines of amendments is
+rewritten, not split.
 
 ### Create the Spec
 
@@ -258,13 +218,9 @@ If a premise cannot be verified, do not specify on it. An unverified premise
 encodes a guess into the spec, and every FR derived from it multiplies the cost
 of the guess.
 
-Read the response shape, not just the field list. A real example: GitHub's
-issue-event object does carry `actor` ("the person who generated the event"),
-so a design that assumed issue history could not be attributed was wrong — but
-`commented` events do *not* use that common shape and carry `user` instead. An
-implementation reading `event.actor.login` would work on most events and return
-null on every comment. One API read surfaces both halves; a memory-only
-assumption surfaces neither.
+Read the response shape, not just the field list; a worked example of a
+premise that was half right is in
+[references/size-gate-examples.md](references/size-gate-examples.md#a-premise-that-was-half-right).
 
 Create a feature branch and run the planning setup:
 
@@ -343,6 +299,7 @@ Key reminders:
 - [references/constitution-template.md](references/constitution-template.md) — Constitution template
 - [references/data-model-guide.md](references/data-model-guide.md) — Data model authoring guide
 - [references/spec-triage-guide.md](references/spec-triage-guide.md) — When to amend existing specs vs. create new ones
+- [references/size-gate-examples.md](references/size-gate-examples.md) — Size-gate worked examples and the premise-check example
 - **`spec-kit` skill** — CLI installation, slash commands, project state detection
 - [SDD philosophy](https://github.com/github/spec-kit/blob/main/spec-driven.md) — The full spec-driven development manifesto
 - [spec-kit repo](https://github.com/github/spec-kit) — Tooling source and docs
