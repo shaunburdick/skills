@@ -4,7 +4,7 @@ description: Enforces safe git practices for AI coding agents. Defines branch pr
 license: MIT
 metadata:
   author: shaunburdick
-  version: "1.6.0"
+  version: "1.7.0"
 ---
 
 # Git Safety
@@ -106,8 +106,7 @@ reference) and preserved in handoffs for traceability.
 When a git operation is denied, report the exact operation, denial source,
 failure evidence, and context; recommend a safe alternative; request explicit
 approval; record the decision; escalate rather than work around.
-**MUST READ**: [references/permission-denied-reporting.md](
-references/permission-denied-reporting.md) — the full rules, valid/failure
+**MUST READ**: [references/permission-denied-reporting.md](references/permission-denied-reporting.md) — the full rules, valid/failure
 examples, the Prohibition on Bypasses, and the Secret and Encrypted-File
 Boundary.
 
