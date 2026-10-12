@@ -4,7 +4,7 @@ description: Enforces safe git practices for AI coding agents. Defines branch pr
 license: MIT
 metadata:
   author: shaunburdick
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 # Git Safety
@@ -40,25 +40,9 @@ A set of non-negotiable rules for safe git operations in AI-assisted development
 
 ## Agent Permission Configuration
 
-If you are authoring an agent definition (e.g., an OpenCode `.md` agent file), add these permissions to the YAML frontmatter to enforce branch protection at the tool level — blocking dangerous commands before they can run:
-
-```yaml
-permission:
-  shell:
-    "git commit *": ask
-    "git push": deny
-    "git push *": deny
-    "git merge": deny
-    "git merge *": deny
-    "git checkout main": deny
-    "git checkout master": deny
-    "git checkout develop": deny
-    "git switch main": deny
-    "git switch master": deny
-    "git switch develop": deny
-```
-
-> Note: These permissions are set by the human author in the agent definition file — a running agent cannot modify its own permissions. This section is a reference for when you're helping set up or review an agent configuration.
+When authoring an agent definition, enforce branch protection at the tool
+level rather than in prose; the frontmatter block is in
+[references/agent-permissions.md](references/agent-permissions.md).
 
 ## Pre-Commit Branch Check
 
@@ -177,6 +161,7 @@ parsing: [references/commit-attribution.md](references/commit-attribution.md).
 ## References
 
 - **[references/commit-attribution.md](references/commit-attribution.md)**: Hook install and update, session setup, verification, uninstall.
+- **[references/agent-permissions.md](references/agent-permissions.md)**: Frontmatter permission block for agent definitions.
 - **[references/attribution-detection.md](references/attribution-detection.md)**: Full detection matrix, OpenCode v2 environment reality, and parsing commands.
 - **[references/preflight-checks.md](references/preflight-checks.md)**: The operation-scoped preflight gates — MUST read before the first git mutation of a session.
 - **[references/permission-denied-reporting.md](references/permission-denied-reporting.md)**: Denial reporting, escalation, and the Secret and Encrypted-File Boundary.
