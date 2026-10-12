@@ -19,7 +19,7 @@ visible silence:
    stderr warning instead of failing silently.
 
 **Richer attribution** is resolved cross-harness (details:
-[references/attribution-detection.md](references/attribution-detection.md)):
+[attribution-detection.md](attribution-detection.md)):
 
 - **Agent name** — `OPENCODE_AGENT` (opencode) or the `AI_AGENT`/`AGENT`
   value itself (per agents.md#136 the value is the agent name: `goose`,
@@ -41,7 +41,7 @@ agent name), `OPENCODE`, `OPENCODE_CLIENT`, `CLAUDE_CODE`, `CLAUDE_CODE_ENTRYPOI
 
 `OPENCODE_TERMINAL` is **never** a detection signal (see below). The full
 per-harness table and notes live in
-[references/attribution-detection.md](references/attribution-detection.md).
+[attribution-detection.md](attribution-detection.md).
 
 ## OpenCode v2: Claim Your Commits
 
@@ -49,7 +49,7 @@ OpenCode v2 (anomalyco/opencode) sets no AI-session marker — only
 `OPENCODE_TERMINAL=1`, on agent tool shells AND the human TUI terminal — and
 each `shell` call spawns a fresh login shell, so session-start exports do
 not persist. Claim each commit explicitly (full reasoning:
-[references/attribution-detection.md](references/attribution-detection.md)):
+[attribution-detection.md](attribution-detection.md)):
 
 ```bash
 git-agent-commit -m "feat: add widget"              # Generated-By: opencode
@@ -153,7 +153,7 @@ bash -n "$HOOK_PATH" && echo "hook syntax OK"
 Humans never need to opt out — the hook only attributes when an agent marker
 or explicit claim is present, and `OPENCODE_TERMINAL` alone never
 misattributes a human commit. Scenario → behavior matrix:
-[references/attribution-detection.md](references/attribution-detection.md).
+[attribution-detection.md](attribution-detection.md).
 
 ## Verification
 
@@ -205,7 +205,7 @@ need to manually remove the attribution block between the
 
 Find AI-generated commits and unique agents/models — full commands, and why
 they are shaped that way, in
-[references/attribution-detection.md](references/attribution-detection.md).
+[attribution-detection.md](attribution-detection.md).
 The essentials (git's trailer parser, not a message grep):
 
 ```bash
