@@ -4,7 +4,7 @@ description: "Practical guide for setting up and using the spec-kit CLI on a pro
 license: MIT
 metadata:
   author: shaunburdick
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Spec-Kit
@@ -161,18 +161,21 @@ After `specify init`, these commands (or skills) are available in your agent:
 | `/speckit.constitution` | Create or update the project constitution (Phase 1) |
 | `/speckit.specify <description>` | Create a feature spec from a description (Phase 2) |
 | `/speckit.clarify` | Resolve ambiguities before planning (Phase 3) |
-| `/speckit.checklist` | Generate quality checklists to validate requirements (after plan) |
 | `/speckit.plan <tech notes>` | Generate implementation plan (Phase 4) |
-| `/speckit.tasks` | Break plan into ordered tasks (Phase 5) |
-| `/speckit.analyze` | Cross-artifact consistency check (before implement) |
+| `/speckit.tasks` | Break plan into ordered tasks (Phase 5, same handoff as the plan) |
 | `/speckit.converge` | Assess codebase against spec/plan/tasks; append unbuilt work as new tasks |
 | `/speckit.taskstoissues` | Convert tasks into dependency-ordered GitHub issues |
 | `/speckit.implement` | Execute tasks (Phase 6) |
 
+`/speckit.checklist` and `/speckit.analyze` are retired here: the
+`spec-challenger` agent covers both gates and returns a cut list instead of a
+coverage table. `specify integration upgrade` may try to restore them; delete
+them again.
+
 ### Example workflow
 
 ```
-/speckit.constitution Focus on simplicity, test coverage ≥80%, TypeScript strict mode
+/speckit.constitution Focus on simplicity, TypeScript strict mode, no suppressions
 
 /speckit.specify A dashboard showing real-time sensor readings with alerting thresholds
 
