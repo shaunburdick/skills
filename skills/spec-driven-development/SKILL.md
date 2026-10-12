@@ -4,7 +4,7 @@ description: Structured spec-driven development workflow. Load this skill whenev
 license: MIT
 metadata:
   author: shaunburdick
-  version: "2.6.0"
+  version: "2.7.0"
 ---
 
 # Spec-Driven Development
@@ -60,8 +60,7 @@ project/
 | 1   | Constitution  | Planner   | `.specify/memory/constitution.md`          | User approves                        |
 | 2   | Specification | Planner   | `specs/###-name/spec.md`                   | User approves                        |
 | 3   | Clarification | Planner   | Updated specs, zero ambiguities            | Zero `[NEEDS CLARIFICATION]` markers |
-| 4   | Plan          | Architect | `specs/###-name/plan.md` + supporting docs | User approves                        |
-| 5   | Tasks         | Architect | `specs/###-name/tasks.md`                  | User approves                        |
+| 4–5 | Plan + Tasks  | Architect | `specs/###-name/plan.md` and `tasks.md`, one handoff | One gate: user approves both |
 | 6   | Implement     | Architect | Working, tested code                       | All acceptance criteria met          |
 
 **Size gate — check this first.**
@@ -136,9 +135,12 @@ Include:
 
 - **Core principles** (5–7 max — more dilutes them)
 - **Technical decisions** (stack, deployment, storage) with rationale for each
-- **Quality standards** (test coverage target, linting, type safety)
+- **Quality standards** (linting, type safety, what a test must earn)
 - **Anti-patterns to avoid** with examples
-- **Success metrics** (product, technical, operational)
+
+A constitution clause that demands artifacts (examples, tests, docs, schemas)
+for every change is itself an anti-pattern: it multiplies every downstream
+spec. Clauses demand evidence of behaviour, not inventory.
 
 The constitution must be approved before writing any feature specs. All subsequent decisions must reference it. If a requirement conflicts with the constitution, resolve the conflict explicitly — don't silently ignore either.
 
@@ -180,13 +182,19 @@ Create `specs/###-feature-name/spec.md` for each feature (the `/speckit.specify`
 
 Key sections:
 
-- **Problem Statement** — one paragraph, what and why
-- **User Stories** — `As a <role>, I want <action> so that <benefit>`
+- **Problem Statement** — one paragraph, what and why, in the user's words
+- **Done when** — one sentence an operator could check
 - **Functional Requirements** — `FR-001`, `FR-002`, … (WHAT, not HOW)
-- **Non-Functional Requirements** — performance, security, compatibility
-- **Acceptance Criteria** — specific, measurable, binary pass/fail — observable behaviour, not inventory of controls or closed string sets
-- **Out of Scope** — explicitly named exclusions, pointing at `changelog.md` for the reasoning
-- **Edge Cases** — documented with expected behavior
+- **Acceptance Criteria** — observable behaviour, binary pass/fail, not inventory of controls or closed string sets
+- **Not doing** — explicitly named exclusions, so nobody downstream adds them back
+- **Edge Cases** — only those the request names or that would plausibly break
+
+**If the request does not say it, do not specify it.** No documentation,
+comment, logging, coverage, performance, or observability requirements unless
+the user asked for them by name. A missing section is a question for the user
+(Phase 3), not a slot to fill with a reasonable default. A spec that says more
+than the request is the most expensive bug in this workflow: every later agent
+treats it as settled.
 
 **Two shape rules, enforced at creation as much as at amendment:**
 
@@ -204,9 +212,9 @@ Key sections:
 **What makes a requirement "executable":**
 
 - Concrete, not abstract: "respond within 500ms" not "respond quickly"
-- Measurable: "≥80% test coverage" not "good test coverage"
-- Explicit error handling: document 404, 500, timeout, empty state behavior
-- Example inputs/outputs for all user-facing elements
+- Observable: "a second submit within 5s returns the first order" not "handles double submits"
+- Error behaviour only where the request names it or a user would hit it
+- Example inputs/outputs where the words are ambiguous
 
 **What does not belong in `spec.md`:** provenance, rejected alternatives, and
 implementation mechanics. Those go to `changelog.md` (requirement-level why)
@@ -265,48 +273,50 @@ git checkout -b 001-feature-name   # see git-safety skill for branch rules
 .specify/scripts/bash/setup-plan.sh --json
 ```
 
-Produce the following files in `specs/###-feature-name/`:
+Produce `plan.md` in `specs/###-feature-name/`: technical context the
+implementer cannot infer from the repository, constitution check, concrete
+project structure (no "Option A / Option B"), and key decisions with the
+alternative each was chosen over. A planned comment, doc, or test appears only
+with the reader question or regression it answers.
 
-**`plan.md`** — Technical context, constitution alignment check, concrete project structure (no "Option A / Option B"), architecture overview, key decisions with rationale.
+Supporting artifacts only when earned, never by default:
 
-**`research.md`** — Technology choices with specific versions, rationale, and alternatives considered and rejected.
+- **`research.md`** — a premise about a third party had to be verified; record the response shape.
+- **`data-model.md`** — a persisted entity is added or changed. See [references/data-model-guide.md](references/data-model-guide.md).
+- **`contracts/`** — the spec names a contract consumed outside this repo.
+- **`quickstart.md`** — verification needs steps a reader cannot infer from the test command.
 
-**`data-model.md`** — Complete entity definitions: fields with types and constraints, relationships, validation rules, state transitions. See [references/data-model-guide.md](references/data-model-guide.md).
-
-**`contracts/`** — API/event schemas (OpenAPI, GraphQL, or event definitions).
-
-**`quickstart.md`** — Setup instructions, how to run tests, key flows to validate manually, expected outputs.
+Say which you skipped.
 
 After planning, agent context files are managed by the integrations system — if you changed agents or upgraded spec-kit, refresh with `specify integration upgrade`.
 
-**Gate:** Present the plan. Do not proceed until approved.
-
----
+Phases 4 and 5 are **one handoff**: the architect returns `plan.md` and
+`tasks.md` together, and one gate covers both. Splitting them doubled the hops
+for no extra decision; the task list is the plan made concrete, and a reader
+can only judge one against the other.
 
 ## Phase 5: Tasks
 
-Create `specs/###-feature-name/tasks.md`:
+Create `specs/###-feature-name/tasks.md` in the same handoff:
 
 ```markdown
 # Tasks: <Feature Name>
 
-- [ ] T-001: Set up project scaffold and install dependencies
-- [ ] T-002: Implement data model / database schema
-- [ ] T-003: [P] Write unit tests for core logic
-- [ ] T-004: Implement core business logic
-- [ ] T-005: Implement API layer
-- [ ] T-006: Integration tests
-- [ ] T-007: Update documentation
+- [ ] T001 Add the Order entity in src/models/order.py (FR-001)
+- [ ] T002 Implement order placement in src/services/orders.py (FR-001, depends on T001)
+- [ ] T003 Expose POST /orders in src/api/orders.py (AC-001)
+- [ ] T004 Test: a second submit within 5s returns the first order, fails without T002 (AC-002)
 ```
 
 Rules:
 
-- Each task completable in one sitting
-- Mark parallel-safe tasks with `[P]`
-- Order by dependency — foundational tasks first
-- Test tasks sit alongside (not after) implementation tasks
+- Every task names the FR or AC it serves. A task with nothing behind it is cut.
+- Each task completable in one sitting; mark parallel-safe tasks with `[P]`
+- Order by dependency, riskiest first where dependencies allow
+- A test task exists only when the spec names a behaviour this project's own logic would otherwise leave unprotected, and names the regression it catches
+- No documentation, logging, validation, hardening, cleanup, or optimization tasks unless an FR asks for them
 
-**Gate:** Present tasks. Do not proceed until approved.
+**Gate:** Present the plan and tasks together. Do not proceed until approved.
 
 ---
 
@@ -317,10 +327,13 @@ Execute tasks in order, following the approved plan and referencing the constitu
 For all code quality rules, lint suppression policy, type safety requirements, and the pre-commit verification protocol, load and follow the **`code-quality` skill**.
 
 Key reminders:
-- ✅ TDD preferred — write tests before or alongside implementation
+- ✅ Make the smallest change that satisfies the task, then remove anything in the diff that does not contribute
+- ✅ A new test must fail without the source change; if it cannot, do not add it
 - ✅ Check off tasks in `tasks.md` as you complete them
 - ✅ When implementation changes what a requirement means, the spec edit lands in the same change — a spec that drifts from the code is a bug
+- ✅ Three acceptable outcomes: done; done with less than the task implied, with the reason; nothing needed
 - ❌ No lint suppressions of any kind — fix the code instead
+- ❌ Nothing from `Not doing` comes back, and no comments, docs, or tests appear that no task asked for
 
 ---
 
