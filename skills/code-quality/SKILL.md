@@ -4,7 +4,7 @@ description: "Enforces non-negotiable code quality standards for AI coding agent
 license: MIT
 metadata:
   author: shaunburdick
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # Code Quality Standards
@@ -163,37 +163,52 @@ back, including file content. Read `message` only.
 
 </details>
 
+## Tests — the one rule
+
+This is the only testing rule in the harness. Other skills and agent
+definitions point here; none of them add to it.
+
+A test earns its place by **failing when behaviour regresses and passing when
+only structure changes**. Add one when this project's own logic would
+otherwise be unprotected, and name the regression it catches. A new test must
+fail without the source change; if you cannot show that, it is not testing
+your change, so do not add it.
+
+Do not add tests for library, framework, or language behaviour. Do not add
+tests for paths the suite already exercises. Do not enumerate edge cases
+(empty, null, boundary, error) mechanically; test the ones the spec names or
+that would plausibly break. Do not treat coverage percentages or test counts
+as goals.
+
+Remove or consolidate a test only when a remaining test demonstrably protects
+the same behaviour. Deleting a redundant test is a delivered improvement, not
+a loss.
+
 ## Task Complete & Pre-Commit Checklist
 
 A task isn't done until it's ready to commit. Run through this once before every commit:
 
 **Code correctness:**
-- [ ] Latest stable versions of all dependencies are used
 - [ ] Comments explain **why**, never **what**. A comment that restates the
       next line of code is deletion-worthy; delete it. Document the non-obvious
       invariant, the rejected alternative, the reasoning a reader would
       otherwise have to re-derive — not the signature.
-- [ ] Automated tests implemented with adequate coverage (per project constitution)
+- [ ] Any new test fails without the source change (see *Tests — the one rule*)
 - [ ] Code passes all linting rules — **zero suppressions in any language**
 - [ ] Type safety fully enforced — **no `any` / untyped signatures**
 - [ ] All acceptance criteria from spec are met
-- [ ] Security best practices followed
-- [ ] Code follows the architecture defined in the plan
 
 **Verification:**
-- [ ] Full test suite: `npm test` / `pytest` / `go test ./...` / equivalent — all green
-- [ ] Linting: `npm run lint` / `ruff check .` / equivalent — zero errors, zero warnings
-- [ ] Type checking: `tsc --noEmit` / `mypy` / equivalent — zero errors
-- [ ] Build: `npm run build` / `go build` / equivalent — completes successfully
+- [ ] The project's existing checks are green: tests, lint, type check, build
 - [ ] The specific change was manually verified end-to-end
-- [ ] Edge cases tested
-- [ ] Related functionality still works
 - [ ] No failed tool call was retried without first re-reading the target file
 
 **Diff review:**
 - [ ] No debug code, `console.log`, or `print` statements left behind
 - [ ] No commented-out code
-- [ ] All changed files are intentional and necessary
-- [ ] Can clearly explain what changed and why
+- [ ] Every changed line contributes to the task; anything else is removed
+- [ ] Nothing was added that no task asked for: no dependency bumps, no
+      drive-by refactors, no comments or tests beyond the rule above
+- [ ] Can clearly explain what changed, what was removed, and why
 
 > 🚫 If any item above is unchecked — don't commit. Fix it first.
