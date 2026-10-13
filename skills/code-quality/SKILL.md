@@ -142,14 +142,10 @@ A task isn't done until it's ready to commit. Run through this once before every
 - [ ] Every changed line contributes to the task; anything else is removed
 - [ ] Nothing was added that no task asked for: no dependency bumps, no
       drive-by refactors, no comments or tests beyond the rule above
-- [ ] **The diff did not grow the comment count.** The items above judge
-      each comment in isolation; this one judges the total. Moved or
-      extracted code keeps its original comment volume or less — a merge of
-      three copies is a reduction, not a place to author new prose for the
-      survivor. Count comment lines in every directory the diff touches,
-      including `tests/` and other paths no ratio metric may report. If the
-      count went **up**, the edit is not done — cut until it doesn't, or
-      record in the PR body the one line added and the reader it saves.
+- [ ] **Refactor: comment count down or level.** Moved or merged code
+      keeps its original comment volume or less — count every directory
+      the diff touches, including ones no ratio metric reports. New
+      behaviour may add its own why-comments; a refactor may not.
 - [ ] Can clearly explain what changed, what was removed, and why
 
 > 🚫 If any item above is unchecked — don't commit. Fix it first.
