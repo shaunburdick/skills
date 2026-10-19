@@ -183,7 +183,7 @@ Findings (source: anomalyco/opencode source at tag `v2.0.15` vs `dev`):
   through, and wrapping the executor to mutate `process.env` would be global
   mutable server state with cross-session races. The transform API is the
   wrong mechanism for this.
-- **dev (unreleased) — path removed.** The bash tool was rewritten: input is
+- **dev (unreleased) — path removed.** The shell tool was rewritten: input is
   `{ command, workdir, timeout }`, execution goes through
   `ChildProcess.make(...)` with no env option and no hook trigger
   (`packages/core/src/tool/bash.ts`). Upstream TODO: *"Add plugin shell.env
