@@ -127,7 +127,7 @@ made once. `## Out of Scope` states what is excluded, and points at
 | Anti-Pattern | Why It's Bad | Correct Approach |
 |---|---|---|
 | "Improve X" as a new spec | Fragments related work, creates orphaned specs | Amend the X spec |
-| "Add feature Y to Z" as a new spec | The Z spec already owns this domain | Add FRs to Z's spec |
+| Treating a variation of a capability Z describes as a new spec | Splits one capability across specs | Amend Z's spec; create a new spec only for a distinct user goal or capability |
 | "Fix bug in X" as a new spec | Bugs are part of the spec's scope | Update ACs in X's spec |
 | Never amending specs | Specs become stale snapshots, not living documents | Rewrite the body; log to `changelog.md` |
 | **Append-only amendment** | Requirements accumulate in arrival order and superseded text stays authoritative-looking, so a reader of the FR section implements the old behaviour | Edit the requirement in place; delete what it replaced |
