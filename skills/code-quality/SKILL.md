@@ -79,7 +79,7 @@ Weak types are deferred bugs. Use the type system fully in whatever language you
 **Python:**
 - ❌ No untyped function signatures — annotate all parameters and return types
 - ✅ Use `TypedDict`, `dataclass`, or `pydantic` models for structured data
-- ✅ Use `Any` from `typing` only as a last resort, and say why in the commit message
+- ✅ Use `Any` from `typing` only as a last resort, with a comment saying why the type cannot be narrower
 
 ## Tooling Discipline
 
