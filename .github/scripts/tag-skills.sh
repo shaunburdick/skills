@@ -25,6 +25,7 @@ version_at() {
 }
 
 touched=()
+declare -A previous_version=()
 
 if [[ $event == push && -n $before && $before != 0000000000000000000000000000000000000000 ]]; then
   while IFS= read -r skill; do
@@ -37,6 +38,7 @@ if [[ $event == push && -n $before && $before != 0000000000000000000000000000000
     git cat-file -e "$before:skills/$skill/SKILL.md" 2>/dev/null || continue
 
     old=$(version_at "$before" "$skill")
+    previous_version[$skill]=$old
     new=$(parse_version < "skills/$skill/SKILL.md")
     if [[ $old == "$new" ]]; then
       bad+=("$skill: metadata.version is still $new")
@@ -90,4 +92,11 @@ for skill in "${candidates[@]}"; do
 
   git tag "$tag" "$target"
   git push origin "refs/tags/$tag"
+
+  old=${previous_version[$skill]:-}
+  if [[ -n $old ]]; then
+    echo "$skill $old -> $version"
+  else
+    echo "$skill $version (first tag)"
+  fi
 done
