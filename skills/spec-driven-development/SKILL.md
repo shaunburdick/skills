@@ -1,10 +1,12 @@
 ---
 name: spec-driven-development
-description: Structured spec-driven development workflow. Load this skill whenever starting a new feature, building a system from scratch, requirements are unclear, or a user asks to "plan", "spec out", "design", or "architect" something — even if they don't use the word "spec". Two independent questions route the work: a spec exists only when a contract changes — new, amended, or consolidated — and a plan exists only when a decision is open, so effort size scales the plan and never the spec. Always review existing specs before creating new ones, and amend by editing the requirement in place rather than appending.
+description: >-
+  Structured spec-driven development workflow. Load this skill whenever starting a new feature, building a system from scratch, requirements are unclear, or a user asks to "plan", "spec out", "design", or "architect" something — even if they don't use the word "spec".
+  Two independent questions route the work: a spec exists only when a contract changes — new, amended, or consolidated — and a plan exists only when a decision is open, so effort size scales the plan and never the spec. Always review existing specs before creating new ones, and amend by editing the requirement in place rather than appending.
 license: MIT
 metadata:
   author: shaunburdick
-  version: "2.11.0"
+  version: "2.11.1"
 ---
 
 # Spec-Driven Development
